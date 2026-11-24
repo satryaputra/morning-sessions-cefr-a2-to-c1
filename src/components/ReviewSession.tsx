@@ -12,6 +12,8 @@ import {
   Sparkles,
   Flame,
   Gauge,
+  AudioLines,
+  Loader2,
 } from 'lucide-react';
 import type {
   AppState,
@@ -28,8 +30,18 @@ import {
   previewRatingOptions,
   type UndoSnapshot,
 } from '../srs/engine';
-import { parseClozeSentence } from '../srs/cloze';
-import { isSpeechSupported, speakEnglish, stopSpeaking } from '../speech/tts';
+import { parseClozeSentence, stripClozeMarkup } from '../srs/cloze';
+import {
+  isSpeechSupported,
+  prefetchElevenLabsAudio,
+  speakEnglish,
+  stopSpeaking,
+} from '../speech/tts';
+import {
+  getVoiceIdForAccent,
+  getVoiceLabelById,
+  loadElevenLabsApiKey,
+} from '../speech/elevenlabs';
 
 interface ReviewSessionProps {
   initialQueue: VocabCard[];
@@ -44,6 +56,8 @@ interface ReviewSessionProps {
   onToggleHint: () => void;
   onChangeAccent: (accent: SpeechAccent) => void;
   onChangeSpeechRate: (rate: SpeechRate) => void;
+  onOpenVoiceSettings: () => void;
+  serverElevenLabsConfigured: boolean;
   onExit: () => void;
   onNotify: (tone: 'success' | 'info' | 'error', text: string) => void;
 }
@@ -98,6 +112,8 @@ export function ReviewSession({
   onToggleHint,
   onChangeAccent,
   onChangeSpeechRate,
+  onOpenVoiceSettings,
+  serverElevenLabsConfigured,
   onExit,
   onNotify,
 }: ReviewSessionProps) {
@@ -108,11 +124,19 @@ export function ReviewSession({
   const [sessionReviewed, setSessionReviewed] = useState(0);
   const [sessionRecalled, setSessionRecalled] = useState(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false);
   const [cardAnimKey, setCardAnimKey] = useState(0);
 
-  const { studyMode, showIndonesianHint, accent, speechRate } = state.settings;
+  const { studyMode, showIndonesianHint, accent, speechRate, ttsProvider, elevenLabs } =
+    state.settings;
   const currentCard = queue[0] ?? null;
+  const nextCard = queue[1] ?? null;
   const speechAvailable = useMemo(() => isSpeechSupported(), []);
+  const activeVoiceName = useMemo(
+    () => getVoiceLabelById(getVoiceIdForAccent(elevenLabs, accent)),
+    [elevenLabs, accent]
+  );
+  const fallbackNotifiedRef = useRef(false);
 
   const deckTitleMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -132,21 +156,44 @@ export function ReviewSession({
 
   const speakText = useCallback(
     (text: string) => {
-      if (!speechAvailable) {
+      if (ttsProvider === 'browser' && !speechAvailable) {
         onNotify('info', 'Browser ini tidak mendukung Web Speech Audio.');
         return;
       }
-      speakEnglish({
+      void speakEnglish({
         text,
         accent,
         rate: speechRate,
-        onStart: () => setIsSpeaking(true),
-        onEnd: () => setIsSpeaking(false),
-        onError: () => setIsSpeaking(false),
+        provider: ttsProvider,
+        elevenLabs,
+        onLoading: (loading) => setIsLoadingAudio(loading),
+        onStart: () => {
+          setIsLoadingAudio(false);
+          setIsSpeaking(true);
+        },
+        onEnd: () => {
+          setIsLoadingAudio(false);
+          setIsSpeaking(false);
+        },
+        onFallback: (reason) => {
+          if (!fallbackNotifiedRef.current) {
+            fallbackNotifiedRef.current = true;
+            onNotify('info', reason);
+          }
+        },
+        onError: () => {
+          setIsLoadingAudio(false);
+          setIsSpeaking(false);
+        },
       });
     },
-    [accent, speechRate, speechAvailable, onNotify]
+    [accent, speechRate, ttsProvider, elevenLabs, speechAvailable, onNotify]
   );
+
+  // Reset fallback toast throttle when user switches provider or voice config
+  useEffect(() => {
+    fallbackNotifiedRef.current = false;
+  }, [ttsProvider, elevenLabs]);
 
   // Stop speech when leaving session
   useEffect(() => {
@@ -158,29 +205,67 @@ export function ReviewSession({
   // Auto-play audio in Listening First mode when a new front card appears
   const lastAutoPlayedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!currentCard || isFlipped || studyMode !== 'listening' || !speechAvailable) {
+    if (!currentCard || isFlipped || studyMode !== 'listening') {
       return;
     }
-    const token = `${currentCard.id}-${cardAnimKey}-${accent}-${speechRate}`;
+    if (ttsProvider === 'browser' && !speechAvailable) {
+      return;
+    }
+    const token = `${currentCard.id}-${cardAnimKey}-${accent}-${speechRate}-${ttsProvider}`;
     if (lastAutoPlayedRef.current === token) return;
     lastAutoPlayedRef.current = token;
 
     const cleanSentence = parsedCloze?.cleanSentence ?? currentCard.sentence;
     const timer = window.setTimeout(() => {
-      speakEnglish({
-        text: cleanSentence,
-        accent,
-        rate: speechRate,
-        onStart: () => setIsSpeaking(true),
-        onEnd: () => setIsSpeaking(false),
-        onError: () => setIsSpeaking(false),
-      });
+      speakText(cleanSentence);
     }, 220);
 
     return () => {
       window.clearTimeout(timer);
     };
-  }, [currentCard, isFlipped, studyMode, speechAvailable, cardAnimKey, accent, speechRate, parsedCloze]);
+  }, [
+    currentCard,
+    isFlipped,
+    studyMode,
+    speechAvailable,
+    cardAnimKey,
+    accent,
+    speechRate,
+    ttsProvider,
+    parsedCloze,
+    speakText,
+  ]);
+
+  // Quietly prefetch next card's studio audio in Listening First mode for instant transitions
+  useEffect(() => {
+    if (ttsProvider !== 'elevenlabs' || studyMode !== 'listening' || !nextCard) {
+      return;
+    }
+    const hasCredentials =
+      serverElevenLabsConfigured ||
+      loadElevenLabsApiKey().length > 0 ||
+      Boolean(elevenLabs.customProxyUrl);
+    if (!hasCredentials) return;
+
+    const timer = window.setTimeout(() => {
+      void prefetchElevenLabsAudio({
+        text: stripClozeMarkup(nextCard.sentence),
+        accent,
+        rate: speechRate,
+        elevenLabs,
+      });
+    }, 650);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    ttsProvider,
+    studyMode,
+    nextCard,
+    accent,
+    speechRate,
+    elevenLabs,
+    serverElevenLabsConfigured,
+  ]);
 
   const handleFlip = useCallback(() => {
     if (!currentCard || isFlipped) return;
@@ -431,6 +516,30 @@ export function ReviewSession({
 
             <button
               type="button"
+              onClick={onOpenVoiceSettings}
+              title={
+                ttsProvider === 'elevenlabs'
+                  ? `Suara ElevenLabs (${activeVoiceName}) — klik untuk atur`
+                  : 'Boost suara natural dengan ElevenLabs'
+              }
+              aria-label="Pengaturan suara ElevenLabs"
+              className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
+              style={{
+                backgroundColor:
+                  ttsProvider === 'elevenlabs' ? 'var(--accent-soft)' : 'var(--bg-surface)',
+                color:
+                  ttsProvider === 'elevenlabs' ? 'var(--accent-text)' : 'var(--text-secondary)',
+                border: '1px solid var(--border-subtle)',
+              }}
+            >
+              <AudioLines className="h-3.5 w-3.5" />
+              <span className="hidden md:inline">
+                {ttsProvider === 'elevenlabs' ? activeVoiceName : 'Suara'}
+              </span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => onChangeStudyMode(studyMode === 'cloze' ? 'listening' : 'cloze')}
               title={
                 studyMode === 'cloze'
@@ -544,7 +653,9 @@ export function ReviewSession({
                           }}
                           aria-label="Putar audio kalimat bahasa Inggris"
                         >
-                          {isSpeaking ? (
+                          {isLoadingAudio ? (
+                            <Loader2 className="h-8 w-8 animate-spin" />
+                          ) : isSpeaking ? (
                             <span className="flex items-end gap-1 h-7" aria-hidden="true">
                               <span className="w-1.5 h-5 rounded-full bg-current animate-sound-bar" />
                               <span
@@ -744,8 +855,18 @@ export function ReviewSession({
                           }}
                           aria-label="Putar audio kalimat lengkap"
                         >
-                          <Volume2 className="h-3.5 w-3.5" />
-                          <span>{isSpeaking ? 'Memutar…' : 'Putar Kalimat'}</span>
+                          {isLoadingAudio ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Volume2 className="h-3.5 w-3.5" />
+                          )}
+                          <span>
+                            {isLoadingAudio
+                              ? 'Memuat…'
+                              : isSpeaking
+                                ? 'Memutar…'
+                                : 'Putar Kalimat'}
+                          </span>
                           <kbd
                             className="hidden md:inline-block rounded px-1 py-0.5 text-[10px] font-mono-code opacity-80"
                             style={{ backgroundColor: 'oklch(0 0 0 / 0.16)' }}

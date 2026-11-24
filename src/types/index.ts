@@ -10,6 +10,17 @@ export type SpeechAccent = 'en-GB' | 'en-US';
 
 export type SpeechRate = 1.0 | 0.8;
 
+export type TtsProvider = 'browser' | 'elevenlabs';
+
+export type ElevenLabsModelId = 'eleven_flash_v2_5' | 'eleven_multilingual_v2';
+
+export interface ElevenLabsSettings {
+  modelId: ElevenLabsModelId;
+  ukVoiceId: string;
+  usVoiceId: string;
+  customProxyUrl: string;
+}
+
 export type ThemePreference = 'light' | 'dark' | 'system';
 
 export type ReviewRatingKey = 'again' | 'hard' | 'good' | 'easy';
@@ -100,6 +111,8 @@ export interface UserSettings {
   showIndonesianHint: boolean;
   accent: SpeechAccent;
   speechRate: SpeechRate;
+  ttsProvider: TtsProvider;
+  elevenLabs: ElevenLabsSettings;
   theme: ThemePreference;
 }
 

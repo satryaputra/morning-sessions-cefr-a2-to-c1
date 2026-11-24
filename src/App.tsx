@@ -3,11 +3,13 @@ import type {
   AppState,
   DailyNewPreset,
   DeckDefinition,
+  ElevenLabsSettings,
   LearningPhaseId,
   NavTab,
   SpeechAccent,
   SpeechRate,
   StudyMode,
+  TtsProvider,
   VocabCard,
 } from './types';
 import {
@@ -29,12 +31,14 @@ import {
   undoCardReview,
   type UndoSnapshot,
 } from './srs/engine';
+import { checkServerTtsStatus, type ServerTtsStatus } from './speech/elevenlabs';
 import { AppHeader } from './components/AppHeader';
 import { TodayView } from './components/TodayView';
 import { DecksView } from './components/DecksView';
 import { AddImportView } from './components/AddImportView';
 import { ProgressView } from './components/ProgressView';
 import { ReviewSession } from './components/ReviewSession';
+import { VoiceSettingsModal } from './components/VoiceSettingsModal';
 import { Toast, type ToastMessage } from './components/Toast';
 
 export default function App() {
@@ -42,8 +46,25 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('today');
   const [inReviewSession, setInReviewSession] = useState(false);
   const [sessionInitialQueue, setSessionInitialQueue] = useState<VocabCard[]>([]);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [serverTtsStatus, setServerTtsStatus] = useState<ServerTtsStatus>({
+    available: false,
+    serverConfigured: false,
+  });
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const toastTimerRef = useRef<number | null>(null);
+
+  // Detect whether local proxy server has ELEVENLABS_API_KEY configured in .env.local
+  useEffect(() => {
+    let active = true;
+    void checkServerTtsStatus().then((status) => {
+      if (!active) return;
+      setServerTtsStatus(status);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const notify = useCallback((tone: ToastMessage['tone'], text: string) => {
     if (toastTimerRef.current !== null) {
@@ -201,6 +222,20 @@ export default function App() {
     }));
   };
 
+  const handleChangeTtsProvider = (ttsProvider: TtsProvider) => {
+    setState((prev) => ({
+      ...prev,
+      settings: { ...prev.settings, ttsProvider },
+    }));
+  };
+
+  const handleChangeElevenLabs = (elevenLabs: ElevenLabsSettings) => {
+    setState((prev) => ({
+      ...prev,
+      settings: { ...prev.settings, elevenLabs },
+    }));
+  };
+
   const handleToggleDeck = (deckId: string) => {
     setState((prev) => {
       const exists = prev.settings.activeDeckIds.includes(deckId);
@@ -313,6 +348,20 @@ export default function App() {
     notify('info', 'Progres review berhasil direset. Kartu kustom Anda tetap aman.');
   };
 
+  const voiceModal = (
+    <VoiceSettingsModal
+      isOpen={isVoiceModalOpen}
+      ttsProvider={state.settings.ttsProvider}
+      elevenLabs={state.settings.elevenLabs}
+      speechRate={state.settings.speechRate}
+      serverStatus={serverTtsStatus}
+      onClose={() => setIsVoiceModalOpen(false)}
+      onChangeProvider={handleChangeTtsProvider}
+      onChangeElevenLabs={handleChangeElevenLabs}
+      onNotify={notify}
+    />
+  );
+
   if (inReviewSession) {
     return (
       <>
@@ -329,9 +378,12 @@ export default function App() {
           onToggleHint={handleToggleHint}
           onChangeAccent={handleChangeAccent}
           onChangeSpeechRate={handleChangeSpeechRate}
+          onOpenVoiceSettings={() => setIsVoiceModalOpen(true)}
+          serverElevenLabsConfigured={serverTtsStatus.serverConfigured}
           onExit={() => setInReviewSession(false)}
           onNotify={notify}
         />
+        {voiceModal}
         <Toast toast={toast} onDismiss={() => setToast(null)} />
       </>
     );
@@ -346,6 +398,8 @@ export default function App() {
         isDark={isDark}
         onToggleTheme={handleToggleTheme}
         dueBadgeCount={queueInfo.totalCount}
+        ttsProvider={state.settings.ttsProvider}
+        onOpenVoiceSettings={() => setIsVoiceModalOpen(true)}
       />
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 pt-6 pb-24 sm:px-6 md:pt-8 md:pb-12">
@@ -375,6 +429,8 @@ export default function App() {
             dailyNewLimit={state.settings.dailyNewLimit}
             accent={state.settings.accent}
             speechRate={state.settings.speechRate}
+            ttsProvider={state.settings.ttsProvider}
+            elevenLabs={state.settings.elevenLabs}
             onToggleDeck={handleToggleDeck}
             onChangeDailyNewLimit={handleChangeDailyNewLimit}
           />
@@ -399,6 +455,7 @@ export default function App() {
         )}
       </main>
 
+      {voiceModal}
       <Toast toast={toast} onDismiss={() => setToast(null)} />
     </div>
   );

@@ -1,5 +1,14 @@
-import type { AppState, DailyActivity, DeckDefinition, LearningPhaseId, UserSettings, VocabCard } from '../types';
+import type {
+  AppState,
+  DailyActivity,
+  DeckDefinition,
+  ElevenLabsModelId,
+  LearningPhaseId,
+  UserSettings,
+  VocabCard,
+} from '../types';
 import { LEARNING_PHASES, STARTER_DECK_IDS } from '../data';
+import { getDefaultElevenLabsSettings } from '../speech/elevenlabs';
 
 export const STORAGE_KEY = 'pagikata_state_v1';
 export const CURRENT_SCHEMA_VERSION = 1 as const;
@@ -21,6 +30,8 @@ export function getDefaultSettings(phaseId: LearningPhaseId = 'phase-1'): UserSe
     showIndonesianHint: phase.suggestedHintDefault,
     accent: 'en-GB',
     speechRate: 1.0,
+    ttsProvider: 'browser',
+    elevenLabs: getDefaultElevenLabsSettings(),
     theme: 'light',
   };
 }
@@ -90,6 +101,31 @@ export function normalizeAppState(raw: unknown): AppState {
     rawSettings.speechRate === 1.0 || rawSettings.speechRate === 0.8
       ? rawSettings.speechRate
       : fallback.settings.speechRate;
+
+  const ttsProvider =
+    rawSettings.ttsProvider === 'browser' || rawSettings.ttsProvider === 'elevenlabs'
+      ? rawSettings.ttsProvider
+      : fallback.settings.ttsProvider;
+
+  const rawEl = isPlainObject(rawSettings.elevenLabs) ? rawSettings.elevenLabs : {};
+  const defaultEl = getDefaultElevenLabsSettings();
+  const modelId: ElevenLabsModelId =
+    rawEl.modelId === 'eleven_flash_v2_5' || rawEl.modelId === 'eleven_multilingual_v2'
+      ? rawEl.modelId
+      : defaultEl.modelId;
+  const elevenLabs = {
+    modelId,
+    ukVoiceId:
+      typeof rawEl.ukVoiceId === 'string' && rawEl.ukVoiceId.trim().length > 0
+        ? rawEl.ukVoiceId.trim()
+        : defaultEl.ukVoiceId,
+    usVoiceId:
+      typeof rawEl.usVoiceId === 'string' && rawEl.usVoiceId.trim().length > 0
+        ? rawEl.usVoiceId.trim()
+        : defaultEl.usVoiceId,
+    customProxyUrl:
+      typeof rawEl.customProxyUrl === 'string' ? rawEl.customProxyUrl.trim() : '',
+  };
 
   const theme =
     rawSettings.theme === 'light' ||
@@ -188,6 +224,8 @@ export function normalizeAppState(raw: unknown): AppState {
           : fallback.settings.showIndonesianHint,
       accent,
       speechRate,
+      ttsProvider,
+      elevenLabs,
       theme,
     },
     customDecks,

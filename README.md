@@ -13,7 +13,7 @@ Web app (PWA) review kosakata bahasa Inggris berbasis **Spaced Repetition System
 - **Sentence Mining / Cloze & Mode Listening First**:
   - Sisi depan menampilkan kalimat konteks dengan target frasa dikosongkan (`_____`), badge CEFR, kelas kata, serta petunjuk arti bahasa Indonesia yang bisa di-toggle (`H`).
   - Mode **Listening First** membacakan audio aksen British English (`en-GB`) terlebih dahulu sebelum teks muncul.
-  - Sisi belakang menampilkan kalimat utuh dengan frasa disorot, transkripsi fonetik **IPA**, definisi bahasa Inggris, arti Indonesia ringkas, catatan/collocation, dan tombol audio **Web Speech API** (`en-GB` / `en-US`, `1.0x` / `0.8x`).
+  - Sisi belakang menampilkan kalimat utuh dengan frasa disorot, transkripsi fonetik **IPA**, definisi bahasa Inggris, arti Indonesia ringkas, catatan/collocation, dan audio pelafalan **ElevenLabs Natural Studio Voices** (British `Alice`, `Daniel (BBC)`, `George`, `Lily` & American `Sarah`, `Brian`, `Eric`) dengan cache audio lokal + fallback otomatis ke **Web Speech API** (`en-GB` / `en-US`, `1.0x` / `0.8x`).
 - **Mesin SRS Modern (`ts-fsrs`)**: 4 penilaian manusiawi (`Lupa`, `Susah`, `Ingat`, `Mudah`) dengan preview interval jadwal berikutnya, fitur **Undo (`Z`)**, serta opsi **Tambah 5 Kartu Ekstra** setelah sesi harian selesai.
 - **Pintasan Keyboard Desktop & Mobile PWA**: `Space` (balik kartu), `1`–`4` (nilai ingatan), `R` (putar audio), `Z` (undo), `H` (toggle petunjuk ID), `Esc` (keluar sesi), plus manifest PWA & service worker agar mudah dipasang ke homescreen.
 - **Tambah & Import Opsional**: Import file/paste **CSV / TSV** dengan deteksi delimiter & preview otomatis, serta **Quick Cloze** 10 detik.
@@ -25,6 +25,11 @@ Web app (PWA) review kosakata bahasa Inggris berbasis **Spaced Repetition System
 pnpm install
 pnpm dev
 ```
+
+### Mengaktifkan Suara Natural ElevenLabs (Opsional)
+
+1. Salin `.env.example` menjadi `.env.local` dan isi `ELEVENLABS_API_KEY` dari akun ElevenLabs Anda — proxy lokal Vite (`/api/tts/elevenlabs`) otomatis menyambungkannya secara aman di `pnpm dev` maupun `pnpm preview`.
+2. Atau buka tombol **Suara** di header aplikasi (atau saat sesi review), pilih **ElevenLabs**, masukkan API key lokal, lalu pilih suara UK/US dan model (`Flash v2.5` atau `Multilingual v2`). Klip audio yang sudah diputar otomatis disimpan di cache browser lokal untuk menghemat kuota, dan akan otomatis fallback ke suara browser jika offline.
 
 ## Perintah Pengembangan & Pengujian
 

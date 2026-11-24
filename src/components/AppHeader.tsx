@@ -6,8 +6,9 @@ import {
   Layers,
   PlusCircle,
   BarChart3,
+  AudioLines,
 } from 'lucide-react';
-import type { NavTab } from '../types';
+import type { NavTab, TtsProvider } from '../types';
 
 interface AppHeaderProps {
   activeTab: NavTab;
@@ -16,6 +17,8 @@ interface AppHeaderProps {
   isDark: boolean;
   onToggleTheme: () => void;
   dueBadgeCount: number;
+  ttsProvider: TtsProvider;
+  onOpenVoiceSettings: () => void;
 }
 
 const NAV_ITEMS: Array<{ id: NavTab; label: string; icon: typeof Sunrise }> = [
@@ -32,6 +35,8 @@ export function AppHeader({
   isDark,
   onToggleTheme,
   dueBadgeCount,
+  ttsProvider,
+  onOpenVoiceSettings,
 }: AppHeaderProps) {
   return (
     <>
@@ -106,7 +111,7 @@ export function AppHeader({
             })}
           </nav>
 
-          {/* Right controls: Streak + Theme */}
+          {/* Right controls: Streak + Voice Boost + Theme */}
           <div className="flex items-center gap-2">
             <div
               className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold tabular-nums"
@@ -120,6 +125,33 @@ export function AppHeader({
               <Flame className="h-3.5 w-3.5" strokeWidth={2.2} />
               <span>{streak} hari</span>
             </div>
+
+            <button
+              type="button"
+              onClick={onOpenVoiceSettings}
+              aria-label="Pengaturan suara ElevenLabs dan pelafalan"
+              title={
+                ttsProvider === 'elevenlabs'
+                  ? 'Suara ElevenLabs Natural aktif — klik untuk atur'
+                  : 'Boost suara natural dengan ElevenLabs'
+              }
+              className="flex h-9 items-center gap-1.5 rounded-xl px-2.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
+              style={{
+                border:
+                  ttsProvider === 'elevenlabs'
+                    ? '1px solid var(--accent-border)'
+                    : '1px solid var(--border-subtle)',
+                backgroundColor:
+                  ttsProvider === 'elevenlabs' ? 'var(--accent-soft)' : 'var(--bg-surface)',
+                color:
+                  ttsProvider === 'elevenlabs' ? 'var(--accent-text)' : 'var(--text-secondary)',
+              }}
+            >
+              <AudioLines className="h-4 w-4" />
+              <span className="hidden sm:inline">
+                {ttsProvider === 'elevenlabs' ? 'ElevenLabs' : 'Suara'}
+              </span>
+            </button>
 
             <button
               type="button"

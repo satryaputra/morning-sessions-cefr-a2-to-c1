@@ -11,10 +11,12 @@ import type {
   CefrLevel,
   DailyNewPreset,
   DeckDefinition,
+  ElevenLabsSettings,
   LearningPhaseId,
   SpeechAccent,
   SpeechRate,
   StoredFsrsCard,
+  TtsProvider,
   VocabCard,
 } from '../types';
 import { classifyMastery, MASTERY_LABELS } from '../srs/engine';
@@ -30,6 +32,8 @@ interface DecksViewProps {
   dailyNewLimit: DailyNewPreset;
   accent: SpeechAccent;
   speechRate: SpeechRate;
+  ttsProvider: TtsProvider;
+  elevenLabs: ElevenLabsSettings;
   onToggleDeck: (deckId: string) => void;
   onChangeDailyNewLimit: (limit: DailyNewPreset) => void;
 }
@@ -51,6 +55,8 @@ export function DecksView({
   dailyNewLimit,
   accent,
   speechRate,
+  ttsProvider,
+  elevenLabs,
   onToggleDeck,
   onChangeDailyNewLimit,
 }: DecksViewProps) {
@@ -457,7 +463,15 @@ export function DecksView({
 
                       <button
                         type="button"
-                        onClick={() => speakEnglish({ text: cleanSentence, accent, rate: speechRate })}
+                        onClick={() =>
+                          void speakEnglish({
+                            text: cleanSentence,
+                            accent,
+                            rate: speechRate,
+                            provider: ttsProvider,
+                            elevenLabs,
+                          })
+                        }
                         aria-label={`Putar pelafalan ${card.phrase}`}
                         title="Putar audio kalimat"
                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-[var(--bg-hover)]"
