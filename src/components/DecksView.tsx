@@ -4,17 +4,16 @@ import {
   Volume2,
   BookOpen,
   X,
-  Sparkles,
-  Check,
 } from 'lucide-react';
 import type {
   CefrLevel,
-  DailyNewPreset,
   DeckDefinition,
+  ElevenLabsSettings,
   LearningPhaseId,
   SpeechAccent,
   SpeechRate,
   StoredFsrsCard,
+  TtsProvider,
   VocabCard,
 } from '../types';
 import { classifyMastery, MASTERY_LABELS } from '../srs/engine';
@@ -27,18 +26,13 @@ interface DecksViewProps {
   progress: Record<string, StoredFsrsCard>;
   activeDeckIds: string[];
   phaseId: LearningPhaseId;
-  dailyNewLimit: DailyNewPreset;
   accent: SpeechAccent;
   speechRate: SpeechRate;
+  ttsProvider: TtsProvider;
+  elevenLabs: ElevenLabsSettings;
   onToggleDeck: (deckId: string) => void;
-  onChangeDailyNewLimit: (limit: DailyNewPreset) => void;
+  embedded?: boolean;
 }
-
-const PRESETS: Array<{ value: DailyNewPreset; label: string; desc: string }> = [
-  { value: 5, label: 'Ringan', desc: '5 kata baru/hari • ~5–7 menit' },
-  { value: 10, label: 'Standar', desc: '10 kata baru/hari • ~10–12 menit' },
-  { value: 15, label: 'Intensif', desc: '15 kata baru/hari • ~15 menit' },
-];
 
 const CEFR_FILTERS: Array<'ALL' | CefrLevel> = ['ALL', 'A2', 'B1', 'B2', 'C1'];
 
@@ -48,11 +42,12 @@ export function DecksView({
   progress,
   activeDeckIds,
   phaseId,
-  dailyNewLimit,
   accent,
   speechRate,
+  ttsProvider,
+  elevenLabs,
   onToggleDeck,
-  onChangeDailyNewLimit,
+  embedded = false,
 }: DecksViewProps) {
   const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -119,91 +114,40 @@ export function DecksView({
   }, [selectedDeckSummary, searchQuery, cefrFilter]);
 
   return (
-    <div className="space-y-6 pb-8 animate-card-reveal">
-      <section>
-        <h1 className="font-serif-study text-3xl font-medium tracking-[-0.015em]">
-          Deck Siap Pakai
-        </h1>
-        <p className="mt-1 text-sm text-pretty" style={{ color: 'var(--text-secondary)' }}>
-          Aktifkan deck yang sesuai dengan fase belajar Anda dan atur ritme kartu baru harian.
-        </p>
-      </section>
-
-      {/* Daily New Card Quota — 3 Simple Anti-Anki Presets */}
-      <section className="paper-card rounded-2xl p-5 space-y-3">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-sm font-semibold">Jatah Kartu Baru Harian</h2>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              Cukup pilih ritme nyaman — antrean review lama tetap otomatis dijaga agar tidak menumpuk.
-            </p>
-          </div>
+    <div className={embedded ? 'flex flex-col gap-5 animate-card-reveal' : 'space-y-6 pb-8 animate-card-reveal'}>
+      {embedded ? (
+        <div className="paper-card rounded-[24px] p-5 sm:p-6">
+          <h2 className="text-base font-bold">Deck Kosakata</h2>
+          <p className="mt-1 text-xs leading-relaxed text-pretty" style={{ color: 'var(--text-secondary)' }}>
+            Aktifkan deck yang sesuai dengan mode belajar Anda dan telusuri daftar katanya untuk antrean review harian.
+          </p>
         </div>
+      ) : (
+        <section>
+          <h1 className="font-serif-study text-3xl font-medium tracking-[-0.015em]">
+            Deck Siap Pakai
+          </h1>
+          <p className="mt-1 text-sm text-pretty" style={{ color: 'var(--text-secondary)' }}>
+            Aktifkan deck yang sesuai dengan mode belajar Anda dan telusuri daftar katanya.
+          </p>
+        </section>
+      )}
 
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-          {PRESETS.map((preset) => {
-            const isSelected = dailyNewLimit === preset.value;
-            return (
-              <button
-                key={preset.value}
-                type="button"
-                onClick={() => onChangeDailyNewLimit(preset.value)}
-                aria-pressed={isSelected}
-                className="flex items-start justify-between rounded-2xl p-3.5 text-left transition-all"
-                style={{
-                  backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--bg-subtle)',
-                  border: isSelected
-                    ? '1.5px solid var(--accent-solid)'
-                    : '1.5px solid transparent',
-                }}
-              >
-                <div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-sm font-bold">{preset.label}</span>
-                    <span
-                      className="text-sm font-bold tabular-nums"
-                      style={{ color: 'var(--accent-text)' }}
-                    >
-                      {preset.value}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                    {preset.desc}
-                  </p>
-                </div>
-                {isSelected && (
-                  <span
-                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
-                    style={{
-                      backgroundColor: 'var(--accent-solid)',
-                      color: 'var(--text-on-accent)',
-                    }}
-                  >
-                    <Check className="h-3 w-3" strokeWidth={2.5} />
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Deck Cards Grid */}
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {deckSummaries.map(({ deck, total, due, unseen, started, mastered, isActive, isRecommended }) => {
           const progressPct = total > 0 ? Math.round((started / total) * 100) : 0;
+          const progressRatio = total > 0 ? started / total : 0;
           const isOpen = selectedDeckId === deck.id;
 
           return (
             <article
               key={deck.id}
-              className="paper-card flex flex-col justify-between rounded-2xl p-5 transition-all"
+              className="paper-card flex flex-col justify-between rounded-[24px] p-5 transition-colors"
               style={{
                 borderColor: isActive ? 'var(--accent-border)' : 'var(--border-subtle)',
               }}
             >
               <div className="space-y-3">
-                {/* Top Badges + Switch */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span
@@ -226,36 +170,39 @@ export function DecksView({
                     </span>
                     {isRecommended && deck.isStarter && (
                       <span
-                        className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-semibold"
+                        className="inline-flex items-center rounded-lg px-2 py-0.5 text-[11px] font-semibold"
                         style={{
                           backgroundColor: 'var(--accent-soft)',
                           color: 'var(--accent-text)',
                         }}
                       >
-                        <Sparkles className="h-3 w-3" />
                         Rekomendasi
                       </span>
                     )}
                   </div>
 
-                  {/* Clean Accessible Toggle Switch */}
                   <button
                     type="button"
                     role="switch"
                     aria-checked={isActive}
                     aria-label={`${isActive ? 'Nonaktifkan' : 'Aktifkan'} ${deck.title}`}
                     onClick={() => onToggleDeck(deck.id)}
-                    className="relative inline-flex h-7 w-12 shrink-0 items-center rounded-full p-1 transition-colors"
-                    style={{
-                      backgroundColor: isActive ? 'var(--accent-solid)' : 'var(--border-strong)',
-                    }}
+                    className="-my-2 flex min-h-11 min-w-12 sm:my-0 sm:min-h-7 shrink-0 items-center justify-center rounded-full"
                   >
                     <span
-                      className="inline-block h-5 w-5 rounded-full bg-white shadow-xs transition-transform"
+                      aria-hidden="true"
+                      className="inline-flex h-7 w-12 items-center rounded-full p-1 transition-colors"
                       style={{
-                        transform: isActive ? 'translateX(20px)' : 'translateX(0px)',
+                        backgroundColor: isActive ? 'var(--accent-solid)' : 'var(--border-strong)',
                       }}
-                    />
+                    >
+                      <span
+                        className="inline-block h-5 w-5 rounded-full bg-white shadow-xs transition-transform"
+                        style={{
+                          transform: isActive ? 'translateX(20px)' : 'translateX(0px)',
+                        }}
+                      />
+                    </span>
                   </button>
                 </div>
 
@@ -266,23 +213,43 @@ export function DecksView({
                   </p>
                 </div>
 
-                {/* Progress Bar & Counts */}
                 <div className="space-y-1.5 pt-1">
-                  <div className="flex items-center justify-between text-xs tabular-nums" style={{ color: 'var(--text-secondary)' }}>
-                    <span>
-                      <strong style={{ color: 'var(--text-primary)' }}>{total}</strong> kartu •{' '}
-                      {due} jatuh tempo • {unseen} baru
-                    </span>
+                  <div
+                    className="flex flex-wrap items-center justify-between gap-2 text-xs tabular-nums"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <span>
+                        <strong style={{ color: 'var(--text-primary)' }}>{total}</strong> kartu
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className="hidden sm:block h-3 w-px"
+                        style={{ backgroundColor: 'var(--border-strong)' }}
+                      />
+                      <span>{due} jatuh tempo</span>
+                      <span
+                        aria-hidden="true"
+                        className="hidden sm:block h-3 w-px"
+                        style={{ backgroundColor: 'var(--border-strong)' }}
+                      />
+                      <span>{unseen} baru</span>
+                    </div>
                     <span className="font-semibold">{progressPct}% mulai</span>
                   </div>
                   <div
+                    role="progressbar"
+                    aria-label={`Progres mulai ${deck.title}`}
+                    aria-valuenow={progressPct}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
                     className="h-1.5 w-full overflow-hidden rounded-full"
                     style={{ backgroundColor: 'var(--bg-subtle)' }}
                   >
                     <div
-                      className="h-full rounded-full transition-all"
+                      className="h-full w-full origin-left rounded-full transition-transform duration-300"
                       style={{
-                        width: `${progressPct}%`,
+                        transform: `scaleX(${progressRatio})`,
                         backgroundColor: 'var(--accent-solid)',
                       }}
                     />
@@ -304,15 +271,16 @@ export function DecksView({
                 </span>
                 <button
                   type="button"
+                  aria-expanded={isOpen}
                   onClick={() => {
                     setSelectedDeckId(isOpen ? null : deck.id);
                     setSearchQuery('');
                     setCefrFilter('ALL');
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
+                  className="inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
                   style={{ color: 'var(--text-primary)' }}
                 >
-                  <BookOpen className="h-3.5 w-3.5" />
+                  <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>{isOpen ? 'Tutup Daftar' : 'Lihat Daftar Kata'}</span>
                 </button>
               </div>
@@ -321,7 +289,6 @@ export function DecksView({
         })}
       </section>
 
-      {/* Expandable Deck Word List Preview with Search & CEFR Filter */}
       {selectedDeckSummary && (
         <section
           aria-label={`Daftar kata ${selectedDeckSummary.deck.title}`}
@@ -329,7 +296,7 @@ export function DecksView({
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-lg font-bold">{selectedDeckSummary.deck.title}</h2>
+              <h3 className="text-lg font-bold">{selectedDeckSummary.deck.title}</h3>
               <p className="text-xs mt-0.5 tabular-nums" style={{ color: 'var(--text-muted)' }}>
                 Menampilkan {filteredPreviewCards.length} dari {selectedDeckSummary.total} kartu
               </p>
@@ -338,26 +305,30 @@ export function DecksView({
               type="button"
               onClick={() => setSelectedDeckId(null)}
               aria-label="Tutup daftar kata"
-              className="rounded-xl p-2 transition-colors hover:bg-[var(--bg-subtle)]"
+              className="flex min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 items-center justify-center rounded-xl p-2 transition-colors hover:bg-[var(--bg-subtle)]"
               style={{ color: 'var(--text-secondary)' }}
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
 
-          {/* Search + CEFR Filter Bar */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative flex-1">
+              <label htmlFor="deck-search" className="sr-only">
+                Cari frasa, kalimat, atau arti
+              </label>
               <Search
+                aria-hidden="true"
                 className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2"
                 style={{ color: 'var(--text-muted)' }}
               />
               <input
+                id="deck-search"
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari frasa, kalimat, atau arti…"
-                className="w-full rounded-xl py-2.5 pl-10 pr-3.5 text-base sm:text-sm outline-none transition-colors"
+                placeholder="Cari frasa, kalimat, atau arti..."
+                className="w-full rounded-xl py-2.5 pl-10 pr-3.5 text-base sm:text-sm transition-colors"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   border: '1px solid var(--border-strong)',
@@ -373,8 +344,9 @@ export function DecksView({
                   <button
                     key={level}
                     type="button"
+                    aria-pressed={active}
                     onClick={() => setCefrFilter(level)}
-                    className="rounded-xl px-3 py-2 text-xs font-semibold transition-colors"
+                    className="min-h-11 min-w-11 sm:min-h-9 sm:min-w-0 rounded-xl px-3 py-2 text-xs font-semibold transition-colors"
                     style={{
                       backgroundColor: active ? 'var(--accent-solid)' : 'var(--bg-subtle)',
                       color: active ? 'var(--text-on-accent)' : 'var(--text-secondary)',
@@ -387,14 +359,31 @@ export function DecksView({
             </div>
           </div>
 
-          {/* Scrollable Card Preview List */}
           <div
             className="max-h-[460px] space-y-2.5 overflow-y-auto pr-1"
             style={{ overscrollBehavior: 'contain' }}
           >
             {filteredPreviewCards.length === 0 ? (
-              <div className="py-10 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-                Tidak ada kata yang cocok dengan pencarian atau filter CEFR tersebut.
+              <div className="py-10 text-center space-y-3">
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                  Tidak ada kata yang cocok
+                  {searchQuery.trim() ? ` untuk "${searchQuery.trim()}"` : ''}
+                  {cefrFilter !== 'ALL' ? ` pada level ${cefrFilter}` : ''}.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setCefrFilter('ALL');
+                  }}
+                  className="inline-flex min-h-11 sm:min-h-9 items-center justify-center rounded-xl px-4 py-2 text-xs font-semibold transition-colors hover:bg-[var(--bg-hover)]"
+                  style={{
+                    backgroundColor: 'var(--bg-subtle)',
+                    color: 'var(--accent-text)',
+                  }}
+                >
+                  Reset pencarian
+                </button>
               </div>
             ) : (
               filteredPreviewCards.map((card) => {
@@ -404,7 +393,7 @@ export function DecksView({
                 return (
                   <div
                     key={card.id}
-                    className="rounded-2xl p-4 transition-colors"
+                    className="rounded-xl p-4 transition-colors"
                     style={{
                       backgroundColor: 'var(--bg-subtle)',
                       border: '1px solid var(--border-subtle)',
@@ -425,7 +414,7 @@ export function DecksView({
                             </span>
                           )}
                           <span
-                            className="rounded-md px-1.5 py-0.5 text-[10px] font-bold"
+                            className="rounded-md px-1.5 py-0.5 text-[11px] font-bold"
                             style={{
                               backgroundColor: 'var(--bg-surface)',
                               color: 'var(--accent-text)',
@@ -434,7 +423,7 @@ export function DecksView({
                             {card.cefr}
                           </span>
                           <span
-                            className="rounded-md px-1.5 py-0.5 text-[10px] font-medium"
+                            className="rounded-md px-1.5 py-0.5 text-[11px] font-medium"
                             style={{
                               backgroundColor: 'var(--bg-surface)',
                               color: 'var(--text-secondary)',
@@ -457,17 +446,25 @@ export function DecksView({
 
                       <button
                         type="button"
-                        onClick={() => speakEnglish({ text: cleanSentence, accent, rate: speechRate })}
+                        onClick={() =>
+                          void speakEnglish({
+                            text: cleanSentence,
+                            accent,
+                            rate: speechRate,
+                            provider: ttsProvider,
+                            elevenLabs,
+                          })
+                        }
                         aria-label={`Putar pelafalan ${card.phrase}`}
                         title="Putar audio kalimat"
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-[var(--bg-hover)]"
+                        className="flex min-h-11 min-w-11 sm:h-9 sm:w-9 sm:min-h-9 sm:min-w-9 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-[var(--bg-hover)]"
                         style={{
                           backgroundColor: 'var(--bg-surface)',
                           border: '1px solid var(--border-subtle)',
                           color: 'var(--text-secondary)',
                         }}
                       >
-                        <Volume2 className="h-4 w-4" />
+                        <Volume2 className="h-4 w-4" aria-hidden="true" />
                       </button>
                     </div>
                   </div>

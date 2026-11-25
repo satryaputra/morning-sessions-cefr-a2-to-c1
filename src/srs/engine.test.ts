@@ -22,21 +22,23 @@ describe('SRS Engine (ts-fsrs)', () => {
     const now = new Date('2026-06-01T07:30:00.000Z');
     const options = previewRatingOptions(undefined, now);
 
-    expect(options.map((o) => o.label)).toEqual(['Lupa', 'Susah', 'Ingat', 'Mudah']);
+    expect(options.map((o) => o.label)).toEqual(['Baru', 'Susah', 'Biasa', 'Mudah']);
     expect(options.map((o) => o.shortcut)).toEqual(['1', '2', '3', '4']);
     expect(options[0].nextDue.getTime()).toBeLessThanOrEqual(options[1].nextDue.getTime());
     expect(options[1].nextDue.getTime()).toBeLessThanOrEqual(options[2].nextDue.getTime());
     expect(options[2].nextDue.getTime()).toBeLessThanOrEqual(options[3].nextDue.getTime());
   });
 
-  it('re-queues a card within session when rated Again, and schedules ahead on Easy', () => {
+  it('schedules a first failed answer tomorrow and a first correct answer later', () => {
     const now = new Date('2026-06-01T07:30:00.000Z');
     const againResult = scheduleCardReview(undefined, 'again', now);
-    expect(againResult.shouldRequeueInSession).toBe(true);
     expect(againResult.nextCard.reps).toBe(1);
+    expect(new Date(againResult.nextCard.due).getTime()).toBe(now.getTime() + 86_400_000);
+
+    const goodResult = scheduleCardReview(undefined, 'good', now);
+    expect(new Date(goodResult.nextCard.due).getTime()).toBeGreaterThan(now.getTime() + 86_400_000);
 
     const easyResult = scheduleCardReview(undefined, 'easy', now);
-    expect(easyResult.shouldRequeueInSession).toBe(false);
     expect(easyResult.nextCard.state).toBe(State.Review);
     expect(new Date(easyResult.nextCard.due).getTime()).toBeGreaterThan(now.getTime() + 86_400_000);
   });

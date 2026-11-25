@@ -4,11 +4,22 @@ export type LearningPhaseId = 'phase-1' | 'phase-2' | 'phase-3' | 'phase-4';
 
 export type DailyNewPreset = 5 | 10 | 15;
 
-export type StudyMode = 'cloze' | 'listening';
+export type StudyStage = 'listening' | 'cloze';
 
 export type SpeechAccent = 'en-GB' | 'en-US';
 
 export type SpeechRate = 1.0 | 0.8;
+
+export type TtsProvider = 'browser' | 'elevenlabs';
+
+export type ElevenLabsModelId = 'eleven_flash_v2_5' | 'eleven_multilingual_v2';
+
+export interface ElevenLabsSettings {
+  modelId: ElevenLabsModelId;
+  ukVoiceId: string;
+  usVoiceId: string;
+  customProxyUrl: string;
+}
 
 export type ThemePreference = 'light' | 'dark' | 'system';
 
@@ -16,13 +27,18 @@ export type ReviewRatingKey = 'again' | 'hard' | 'good' | 'easy';
 
 export type MasteryBucket = 'new' | 'learning' | 'mastering' | 'memorized';
 
-export type NavTab = 'today' | 'decks' | 'add' | 'progress';
+export type NavTab = 'today' | 'progress' | 'settings';
+
+export type SettingsSectionId = 'learning' | 'voice' | 'decks' | 'import' | 'data';
 
 export interface VocabCard {
   id: string;
   deckId: string;
   phrase: string;
   sentence: string;
+  sentenceTranslationId?: string;
+  practiceSentence?: string;
+  practiceSentenceTranslationId?: string;
   ipa: string;
   definitionEn: string;
   translationId: string;
@@ -90,17 +106,35 @@ export interface DailyActivity {
   goodCount: number;
   easyCount: number;
   extraNewGranted: number;
+  practiceCompleted?: number;
+  practiceRatings?: Partial<Record<ReviewRatingKey, number>>;
+  listeningRatings?: Partial<Record<ReviewRatingKey, number>>;
 }
 
 export interface UserSettings {
   phaseId: LearningPhaseId;
   activeDeckIds: string[];
   dailyNewLimit: DailyNewPreset;
-  studyMode: StudyMode;
   showIndonesianHint: boolean;
   accent: SpeechAccent;
   speechRate: SpeechRate;
+  ttsProvider: TtsProvider;
+  elevenLabs: ElevenLabsSettings;
   theme: ThemePreference;
+}
+
+export interface DailyStudy {
+  dateKey: string;
+  pairedIds: string[];
+  practiceIds: string[];
+  listenedIds: string[];
+  answeredIds: string[];
+  listeningRatingsByCard?: Record<string, ReviewRatingKey>;
+  answeredRatingsByCard?: Record<string, ReviewRatingKey>;
+  clozeDueIds?: string[];
+  clozeBaselines?: Record<string, StoredFsrsCard | null>;
+  listeningFinishedCount?: number;
+  clozeFinishedCount?: number;
 }
 
 export interface AppState {
@@ -111,10 +145,11 @@ export interface AppState {
   progress: Record<string, StoredFsrsCard>;
   dailyActivity: Record<string, DailyActivity>;
   reviewHistory: ReviewLogEntry[];
+  dailyStudy?: DailyStudy;
 }
 
 export interface BackupPayload {
-  app: 'PagiKata';
+  app: 'vocab-srs' | 'PagiKata';
   schemaVersion: 1;
   exportedAt: string;
   state: AppState;

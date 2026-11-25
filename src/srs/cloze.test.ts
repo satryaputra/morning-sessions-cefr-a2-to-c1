@@ -62,4 +62,44 @@ describe('Cloze parser & Starter Deck integrity', () => {
       ).toBe(true);
     }
   });
+
+  it('provides clean hints and full Indonesian practice translations on all 200 starter cards', () => {
+    expect(STARTER_CARDS).toHaveLength(200);
+    const forbiddenChars = /[•·→—]/;
+
+    for (const card of STARTER_CARDS) {
+      const def = card.definitionEn.trim();
+      const sentenceTrans = (card.sentenceTranslationId ?? '').trim();
+      const practice = (card.practiceSentence ?? '').trim();
+      const practiceTrans = (card.practiceSentenceTranslationId ?? '').trim();
+
+      expect(def.length, `Empty definitionEn on ${card.id}`).toBeGreaterThan(0);
+      expect(
+        def.toLowerCase().includes(card.phrase.trim().toLowerCase()),
+        `definitionEn leaks phrase "${card.phrase}" on ${card.id}`
+      ).toBe(false);
+
+      expect(sentenceTrans.length, `Empty sentenceTranslationId on ${card.id}`).toBeGreaterThan(0);
+      expect(practice.length, `Empty practiceSentence on ${card.id}`).toBeGreaterThan(0);
+      expect(practiceTrans.length, `Empty practiceSentenceTranslationId on ${card.id}`).toBeGreaterThan(0);
+      expect(
+        practiceTrans,
+        `practiceSentenceTranslationId should translate practiceSentence rather than copy sentenceTranslationId on ${card.id}`
+      ).not.toBe(sentenceTrans);
+
+      expect(forbiddenChars.test(def), `Forbidden character in definitionEn on ${card.id}`).toBe(false);
+      expect(
+        forbiddenChars.test(sentenceTrans),
+        `Forbidden character in sentenceTranslationId on ${card.id}`
+      ).toBe(false);
+      expect(
+        forbiddenChars.test(practice),
+        `Forbidden character in practiceSentence on ${card.id}`
+      ).toBe(false);
+      expect(
+        forbiddenChars.test(practiceTrans),
+        `Forbidden character in practiceSentenceTranslationId on ${card.id}`
+      ).toBe(false);
+    }
+  });
 });

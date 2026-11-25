@@ -1,5 +1,5 @@
 import type { CefrLevel, VocabCard } from '../types';
-import { extractClozePhrase, stripClozeMarkup } from '../srs/cloze';
+import { extractClozePhrase, getStudySentences, stripClozeMarkup } from '../srs/cloze';
 
 export interface CsvImportResult {
   cards: VocabCard[];
@@ -9,8 +9,8 @@ export interface CsvImportResult {
 }
 
 export const SAMPLE_CSV_TEMPLATE = `phrase,sentence,ipa,definition,translation,partOfSpeech,cefr,notes
-keep pace with,"Daily audio clips help learners keep pace with natural British speech.",/kiːp peɪs wɪð/,"to move or develop at the same speed as something","mengimbangi kecepatan / mengikuti perkembangan",phrase,B2,"Sering dipakai bersama change, technology, atau spoken English."
-bite the bullet,"I finally decided to bite the bullet and speak only English during our weekly call.",/baɪt ðə ˈbʊlɪt/,"to force yourself to do something difficult or unpleasant that you have been avoiding","memberanikan diri menghadapi hal sulit",idiom,B2,"Idiom klasik yang sering muncul di BBC 6 Minute English."
+keep pace with,"Daily audio clips help learners keep pace with natural English speech.",/kiːp peɪs wɪð/,"to move or develop at the same speed as something","mengimbangi kecepatan / mengikuti perkembangan",phrase,B2,"Sering dipakai bersama change, technology, atau spoken English."
+bite the bullet,"I finally decided to bite the bullet and speak only English during our weekly call.",/baɪt ðə ˈbʊlɪt/,"to force yourself to do something difficult or unpleasant that you have been avoiding","memberanikan diri menghadapi hal sulit",idiom,B2,"Idiom percakapan yang sering dipakai dalam diskusi sehari-hari."
 pragmatic,"We took a pragmatic approach by focusing on ten high-frequency phrases a day.",/præɡˈmætɪk/,"dealing with problems sensibly and realistically","pragmatis / realistis dan praktis",adjective,C1,"Collocation: a pragmatic approach / solution."`;
 
 const HEADER_ALIASES: Record<string, keyof ColumnMap> = {
@@ -26,6 +26,10 @@ const HEADER_ALIASES: Record<string, keyof ColumnMap> = {
   context: 'sentence',
   cloze: 'sentence',
   kalimat: 'sentence',
+  sentencetranslationid: 'sentenceTranslationId',
+  terjemahankalimat: 'sentenceTranslationId',
+  practicesentence: 'practiceSentence',
+  kalimattebakkata: 'practiceSentence',
   ipa: 'ipa',
   phonetic: 'ipa',
   pronunciation: 'ipa',
@@ -54,6 +58,8 @@ const HEADER_ALIASES: Record<string, keyof ColumnMap> = {
 interface ColumnMap {
   phrase?: number;
   sentence?: number;
+  sentenceTranslationId?: number;
+  practiceSentence?: number;
   ipa?: number;
   definitionEn?: number;
   translationId?: number;
@@ -237,6 +243,8 @@ export function parseVocabImport(
     const partOfSpeech = get(map.partOfSpeech) || 'phrase';
     const cefr = normalizeCefr(get(map.cefr), defaultCefr);
     const notes = get(map.notes);
+    const practiceSentence = get(map.practiceSentence);
+    const sentenceTranslationId = get(map.sentenceTranslationId);
 
     // Support 2-column quick cloze format: "sentence with {{phrase}}, translation"
     if (!hasHeader && cols.length === 2 && extractClozePhrase(cols[0])) {
@@ -261,7 +269,7 @@ export function parseVocabImport(
 
     if (!sentence) {
       sentence = `I want to use "${phrase}" naturally in my next conversation.`;
-      warnings.push(`Baris ${rowNum} ("${phrase}") tidak memiliki kalimat konteks — dibuatkan kalimat standar.`);
+      warnings.push(`Baris ${rowNum} ("${phrase}") tidak memiliki kalimat konteks, dibuatkan kalimat standar.`);
     }
 
     const cleanSentence = stripClozeMarkup(sentence);
@@ -271,11 +279,18 @@ export function parseVocabImport(
       );
     }
 
+    const hasAlternate = practiceSentence && getStudySentences({ sentence, phrase, practiceSentence }).hasAlternate;
+    if (practiceSentence && !hasAlternate) {
+      warnings.push(`Baris ${rowNum} ("${phrase}"): kalimat Tebak Kata harus memuat bentuk kata yang sama. Kalimat Listening akan dipakai.`);
+    }
+
     cards.push({
       id: `${idPrefix}-${idx + 1}`,
       deckId: options.deckId,
       phrase,
       sentence,
+      ...(sentenceTranslationId ? { sentenceTranslationId } : {}),
+      ...(hasAlternate ? { practiceSentence } : {}),
       ipa: ipa || '',
       definitionEn: definitionEn || `Useful English expression: "${phrase}".`,
       translationId: translationId || 'Belum ada arti Indonesia',

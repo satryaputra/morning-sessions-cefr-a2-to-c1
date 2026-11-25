@@ -12,48 +12,53 @@ interface ToastProps {
 }
 
 export function Toast({ toast, onDismiss }: ToastProps) {
-  if (!toast) return null;
-
+  const isError = toast?.tone === 'error';
   const Icon =
-    toast.tone === 'success' ? CheckCircle2 : toast.tone === 'error' ? AlertCircle : Info;
+    toast?.tone === 'success' ? CheckCircle2 : isError ? AlertCircle : Info;
 
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md animate-card-reveal"
-    >
-      <div
-        className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium shadow-lg"
-        style={{
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border-strong)',
-          color: 'var(--text-primary)',
-          boxShadow: 'var(--shadow-elevated)',
-        }}
-      >
-        <Icon
-          className="h-4 w-4 shrink-0"
-          style={{
-            color:
-              toast.tone === 'error'
-                ? 'var(--rate-again-text)'
-                : toast.tone === 'success'
-                  ? 'var(--accent-text)'
-                  : 'var(--sun-text)',
-          }}
-        />
-        <span className="flex-1 text-pretty">{toast.text}</span>
-        <button
-          type="button"
-          onClick={onDismiss}
-          aria-label="Tutup notifikasi"
-          className="rounded-lg p-1 transition-colors hover:bg-[var(--bg-subtle)]"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          <X className="h-4 w-4" />
-        </button>
+    <>
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {toast && !isError ? toast.text : ''}
       </div>
-    </div>
+      <div role="alert" aria-live="assertive" aria-atomic="true" className="sr-only">
+        {toast && isError ? toast.text : ''}
+      </div>
+      {toast && (
+        <div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md animate-card-reveal">
+          <div
+            className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium shadow-lg"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-strong)',
+              color: 'var(--text-primary)',
+              boxShadow: 'var(--shadow-elevated)',
+            }}
+          >
+            <Icon
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0"
+              style={{
+                color: isError
+                  ? 'var(--rate-again-text)'
+                  : toast.tone === 'success'
+                    ? 'var(--accent-text)'
+                    : 'var(--sun-text)',
+              }}
+            />
+            <span className="flex-1 text-pretty">{toast.text}</span>
+            <button
+              type="button"
+              onClick={onDismiss}
+              aria-label="Tutup notifikasi"
+              className="flex min-h-11 min-w-11 sm:min-h-8 sm:min-w-8 items-center justify-center rounded-lg p-1 transition-colors hover:bg-[var(--bg-subtle)]"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
