@@ -453,28 +453,29 @@ export function ReviewSession({
           borderBottom: '1px solid var(--border-subtle)',
         }}
       >
-        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-2 sm:gap-3 px-4">
+        <div className="mx-auto flex min-h-14 max-w-3xl items-center justify-between gap-2 sm:gap-3 px-3 py-1.5 sm:px-4">
           <button
             type="button"
+            aria-label="Kembali ke Hari Ini"
             onClick={() => {
               stopSpeaking();
               onExit();
             }}
-            className="inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-[var(--bg-subtle)]"
+            className="inline-flex min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 shrink-0 items-center justify-center gap-1.5 rounded-xl px-0 sm:px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-[var(--bg-subtle)]"
             style={{ color: 'var(--text-secondary)' }}
           >
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            <span>Kembali</span>
+            <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="hidden sm:inline">Kembali</span>
           </button>
 
-          <div className="flex flex-1 max-w-xs items-center gap-2.5">
+          <div className="flex min-w-0 flex-1 max-w-xs items-center gap-2 sm:gap-2.5">
             <div
               role="progressbar"
               aria-label="Progres sesi review"
               aria-valuenow={progressPct}
               aria-valuemin={0}
               aria-valuemax={100}
-              className="h-2 flex-1 overflow-hidden rounded-full"
+              className="h-2 min-w-6 flex-1 overflow-hidden rounded-full"
               style={{ backgroundColor: 'var(--bg-subtle)' }}
             >
               <div
@@ -486,27 +487,27 @@ export function ReviewSession({
               />
             </div>
             <span
-              className="text-xs font-semibold tabular-nums whitespace-nowrap"
+              className="shrink-0 text-xs font-semibold tabular-nums whitespace-nowrap"
               style={{ color: 'var(--text-secondary)' }}
             >
               {currentCard ? `${sessionReviewed + 1} / ${totalSteps}` : `${sessionReviewed} selesai`}
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-1.5">
             <button
               type="button"
               onClick={handleUndo}
               disabled={undoStack.length === 0}
               title="Batalkan penilaian terakhir (Z)"
               aria-label="Undo penilaian terakhir"
-              className="inline-flex min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 items-center justify-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:opacity-35 hover:bg-[var(--bg-subtle)]"
+              className="inline-flex min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 shrink-0 items-center justify-center gap-1.5 rounded-xl px-0 sm:px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:opacity-35 hover:bg-[var(--bg-subtle)]"
               style={{
                 border: '1px solid var(--border-subtle)',
                 color: 'var(--text-primary)',
               }}
             >
-              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+              <RotateCcw className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span className="hidden sm:inline">Undo</span>
               <kbd
                 className="hidden md:inline-block rounded px-1 py-0.5 text-[11px] font-mono-code"
@@ -525,7 +526,7 @@ export function ReviewSession({
                   : 'Atur suara ElevenLabs atau browser'
               }
               aria-label="Pengaturan suara ElevenLabs"
-              className="inline-flex min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 items-center justify-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
+              className="inline-flex min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 shrink-0 items-center justify-center gap-1.5 rounded-xl px-0 sm:px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
               style={{
                 backgroundColor:
                   ttsProvider === 'elevenlabs' ? 'var(--accent-soft)' : 'var(--bg-surface)',
@@ -534,7 +535,7 @@ export function ReviewSession({
                 border: '1px solid var(--border-subtle)',
               }}
             >
-              <AudioLines className="h-3.5 w-3.5" aria-hidden="true" />
+              <AudioLines className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span className="hidden md:inline">
                 {ttsProvider === 'elevenlabs' ? activeVoiceName : 'Suara'}
               </span>
@@ -553,7 +554,7 @@ export function ReviewSession({
                   ? 'Beralih ke Mode Listening First'
                   : 'Beralih ke Mode Cloze'
               }
-              className="inline-flex min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 items-center justify-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
+              className="inline-flex min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 shrink-0 items-center justify-center gap-1.5 rounded-xl px-0 sm:px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
               style={{
                 backgroundColor: studyMode === 'listening' ? 'var(--accent-soft)' : 'var(--bg-surface)',
                 color: studyMode === 'listening' ? 'var(--accent-text)' : 'var(--text-secondary)',

@@ -501,7 +501,7 @@ export function VoiceSettingsModal({
               </div>
 
               <details className="rounded-xl px-3.5 py-2.5" style={{ backgroundColor: 'var(--bg-subtle)' }}>
-                <summary className="flex min-h-9 cursor-pointer list-none items-center justify-between text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                <summary className="flex min-h-11 sm:min-h-9 cursor-pointer list-none items-center justify-between text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
                   <span>Opsi Lanjutan (Custom Proxy Endpoint)</span>
                   <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
                 </summary>

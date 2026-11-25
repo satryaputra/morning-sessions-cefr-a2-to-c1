@@ -197,6 +197,7 @@
   margin: auto;
   padding: 0;
   border: 0;
+  border-radius: 24px;
   background: transparent;
   color: inherit;
   width: min(36rem, calc(100vw - 2rem));

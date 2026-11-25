@@ -389,7 +389,7 @@ export function DecksView({
                     type="button"
                     aria-pressed={active}
                     onClick={() => setCefrFilter(level)}
-                    className="min-h-11 sm:min-h-9 rounded-xl px-3 py-2 text-xs font-semibold transition-colors"
+                    className="min-h-11 min-w-11 sm:min-h-9 sm:min-w-0 rounded-xl px-3 py-2 text-xs font-semibold transition-colors"
                     style={{
                       backgroundColor: active ? 'var(--accent-solid)' : 'var(--bg-subtle)',
                       color: active ? 'var(--text-on-accent)' : 'var(--text-secondary)',
