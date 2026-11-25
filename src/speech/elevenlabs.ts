@@ -30,7 +30,7 @@ export const ELEVENLABS_VOICES: ElevenLabsVoiceOption[] = [
     name: 'Daniel',
     accent: 'en-GB',
     gender: 'Laki-laki',
-    styleLabel: 'Tegas & artikulatif • Gaya BBC News',
+    styleLabel: 'Tegas & artikulatif • Narator Berita UK',
   },
   {
     id: 'JBFqnCBsd6RMkjVDRZzb',
@@ -167,6 +167,18 @@ export class ElevenLabsTtsError extends Error {
 export interface ServerTtsStatus {
   available: boolean;
   serverConfigured: boolean;
+}
+
+export function isElevenLabsConfigured(
+  serverStatus: ServerTtsStatus,
+  elevenLabs: ElevenLabsSettings,
+  hasLocalKey = false
+): boolean {
+  return (
+    serverStatus.serverConfigured ||
+    elevenLabs.customProxyUrl.trim().length > 0 ||
+    hasLocalKey
+  );
 }
 
 export async function checkServerTtsStatus(

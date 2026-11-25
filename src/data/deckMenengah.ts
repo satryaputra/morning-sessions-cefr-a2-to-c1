@@ -560,7 +560,7 @@ export const DECK_MENENGAH_CARDS: VocabCard[] = [
     id: 'ox3k-m-47',
     deckId: DECK_ID,
     phrase: 'as far as I know',
-    sentence: 'As far as I know, the updated BBC podcast episodes come out every Thursday.',
+    sentence: 'As far as I know, the updated podcast episodes come out every Thursday.',
     ipa: '/æz fɑːr æz aɪ nəʊ/',
     definitionEn: 'according to the information I currently have, though I might not know everything',
     translationId: 'sejauh yang saya tahu',

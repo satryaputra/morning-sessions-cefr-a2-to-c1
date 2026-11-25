@@ -16,10 +16,12 @@ import {
   ElevenLabsTtsError,
   getDefaultElevenLabsSettings,
   getVoiceIdForAccent,
+  isElevenLabsConfigured,
   loadElevenLabsApiKey,
   saveElevenLabsApiKey,
   synthesizeElevenLabsAudio,
 } from './elevenlabs';
+import { LEARNING_PHASES, STARTER_CARDS, STARTER_DECKS } from '../data';
 import { serializeBackup } from '../importExport/backup';
 import { createInitialAppState, type StorageLike } from '../storage/state';
 import { speakEnglish } from './tts';
@@ -298,6 +300,62 @@ describe('ElevenLabs Client, Key Isolation & Audio Cache', () => {
       expect(onFallback).toHaveBeenCalledTimes(1);
     } finally {
       globalThis.fetch = originalFetch;
+    }
+  });
+});
+
+describe('Default US Accent, ElevenLabs Configuration & Brand/Arrow-Free Copy', () => {
+  it('defaults initial user settings to American (en-US) accent', () => {
+    const initial = createInitialAppState();
+    expect(initial.settings.accent).toBe('en-US');
+    expect(initial.settings.ttsProvider).toBe('browser');
+  });
+
+  it('reports ElevenLabs configured only when server key, custom proxy, or local key exists', () => {
+    const defaults = getDefaultElevenLabsSettings();
+
+    expect(
+      isElevenLabsConfigured({ available: true, serverConfigured: false }, defaults, false)
+    ).toBe(false);
+
+    expect(
+      isElevenLabsConfigured({ available: true, serverConfigured: true }, defaults, false)
+    ).toBe(true);
+
+    expect(
+      isElevenLabsConfigured(
+        { available: true, serverConfigured: false },
+        { ...defaults, customProxyUrl: 'https://proxy.example.com/tts' },
+        false
+      )
+    ).toBe(true);
+
+    expect(
+      isElevenLabsConfigured({ available: true, serverConfigured: false }, defaults, true)
+    ).toBe(true);
+  });
+
+  it('contains zero arrow symbols and zero product/publisher branding in visible curriculum data', () => {
+    const forbidden = /→|PagiKata|\bBBC\b|\bOxford\b/i;
+
+    for (const phase of LEARNING_PHASES) {
+      expect(phase.title).not.toMatch(forbidden);
+      expect(phase.cefrTarget).not.toMatch(forbidden);
+      expect(phase.curriculumLabel).not.toMatch(forbidden);
+      expect(phase.monthsLabel).not.toMatch(forbidden);
+      expect(phase.description).not.toMatch(forbidden);
+    }
+
+    for (const deck of STARTER_DECKS) {
+      expect(deck.title).not.toMatch(forbidden);
+      expect(deck.subtitle).not.toMatch(forbidden);
+      expect(deck.description).not.toMatch(forbidden);
+      expect(deck.phaseLabel).not.toMatch(forbidden);
+    }
+
+    for (const card of STARTER_CARDS) {
+      expect(card.sentence).not.toMatch(forbidden);
+      expect(card.notes).not.toMatch(forbidden);
     }
   });
 });

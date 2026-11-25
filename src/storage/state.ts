@@ -28,7 +28,7 @@ export function getDefaultSettings(phaseId: LearningPhaseId = 'phase-1'): UserSe
     dailyNewLimit: 10,
     studyMode: 'cloze',
     showIndonesianHint: phase.suggestedHintDefault,
-    accent: 'en-GB',
+    accent: 'en-US',
     speechRate: 1.0,
     ttsProvider: 'browser',
     elevenLabs: getDefaultElevenLabsSettings(),

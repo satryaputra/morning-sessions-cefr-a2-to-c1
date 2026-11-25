@@ -72,7 +72,7 @@ export function ProgressView({
   const handleExportBackup = () => {
     const now = new Date();
     const json = serializeBackup(state, now);
-    const filename = `pagikata-backup-${getLocalDateKey(now)}.json`;
+    const filename = `backup-kosakata-${getLocalDateKey(now)}.json`;
     triggerJsonDownload(filename, json);
     onNotify('success', `Backup diunduh (${filename}).`);
   };
@@ -113,7 +113,7 @@ export function ProgressView({
           Progres Belajar
         </h1>
         <p className="mt-1 text-sm text-pretty" style={{ color: 'var(--text-secondary)' }}>
-          Ringkasan kebiasaan pagi, penguasaan kosakata, dan perjalanan CEFR A2 → C1 Anda.
+          Ringkasan kebiasaan harian, penguasaan kosakata, dan perkembangan level CEFR A2–C1 Anda.
         </p>
       </section>
 

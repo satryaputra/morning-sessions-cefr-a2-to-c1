@@ -9,8 +9,8 @@ export interface CsvImportResult {
 }
 
 export const SAMPLE_CSV_TEMPLATE = `phrase,sentence,ipa,definition,translation,partOfSpeech,cefr,notes
-keep pace with,"Daily audio clips help learners keep pace with natural British speech.",/kiːp peɪs wɪð/,"to move or develop at the same speed as something","mengimbangi kecepatan / mengikuti perkembangan",phrase,B2,"Sering dipakai bersama change, technology, atau spoken English."
-bite the bullet,"I finally decided to bite the bullet and speak only English during our weekly call.",/baɪt ðə ˈbʊlɪt/,"to force yourself to do something difficult or unpleasant that you have been avoiding","memberanikan diri menghadapi hal sulit",idiom,B2,"Idiom klasik yang sering muncul di BBC 6 Minute English."
+keep pace with,"Daily audio clips help learners keep pace with natural English speech.",/kiːp peɪs wɪð/,"to move or develop at the same speed as something","mengimbangi kecepatan / mengikuti perkembangan",phrase,B2,"Sering dipakai bersama change, technology, atau spoken English."
+bite the bullet,"I finally decided to bite the bullet and speak only English during our weekly call.",/baɪt ðə ˈbʊlɪt/,"to force yourself to do something difficult or unpleasant that you have been avoiding","memberanikan diri menghadapi hal sulit",idiom,B2,"Idiom percakapan yang sering dipakai dalam diskusi sehari-hari."
 pragmatic,"We took a pragmatic approach by focusing on ten high-frequency phrases a day.",/præɡˈmætɪk/,"dealing with problems sensibly and realistically","pragmatis / realistis dan praktis",adjective,C1,"Collocation: a pragmatic approach / solution."`;
 
 const HEADER_ALIASES: Record<string, keyof ColumnMap> = {

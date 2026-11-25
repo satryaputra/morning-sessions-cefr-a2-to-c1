@@ -362,7 +362,7 @@ export const DECK_FONDASI_CARDS: VocabCard[] = [
     translationId: 'memahami / memecahkan masalah',
     partOfSpeech: 'phrasal verb',
     cefr: 'B1',
-    notes: 'Sinonim British yang juga sering dipakai di BBC adalah "work out".',
+    notes: 'Sinonim lain yang juga sering dipakai adalah "work out".',
   },
   {
     id: 'ox3k-f-31',

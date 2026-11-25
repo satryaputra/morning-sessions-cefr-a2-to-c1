@@ -350,6 +350,10 @@ export function ReviewSession({
   // Desktop keyboard shortcuts: Space, 1-4, R, Z, H, Esc
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (document.querySelector('dialog[open]')) {
+        return;
+      }
+
       const target = event.target as HTMLElement | null;
       if (
         target &&
@@ -523,9 +527,9 @@ export function ReviewSession({
               title={
                 ttsProvider === 'elevenlabs'
                   ? `Suara ElevenLabs (${activeVoiceName}) aktif. Klik untuk atur.`
-                  : 'Atur suara ElevenLabs atau browser'
+                  : 'Atur aksen & suara pelafalan'
               }
-              aria-label="Pengaturan suara ElevenLabs"
+              aria-label="Pengaturan suara"
               className="inline-flex min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 shrink-0 items-center justify-center gap-1.5 rounded-xl px-0 sm:px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
               style={{
                 backgroundColor:
@@ -682,14 +686,14 @@ export function ReviewSession({
                         <div className="flex flex-wrap items-center justify-center gap-2">
                           <button
                             type="button"
-                            onClick={() => onChangeAccent(accent === 'en-GB' ? 'en-US' : 'en-GB')}
+                            onClick={() => onChangeAccent(accent === 'en-US' ? 'en-GB' : 'en-US')}
                             className="min-h-11 sm:min-h-9 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-hover)]"
                             style={{
                               backgroundColor: 'var(--bg-subtle)',
                               color: 'var(--text-primary)',
                             }}
                           >
-                            Aksen: {accent === 'en-GB' ? 'UK (en-GB)' : 'US (en-US)'}
+                            Aksen: {accent === 'en-US' ? 'US (en-US)' : 'UK (en-GB)'}
                           </button>
                           <button
                             type="button"
@@ -783,24 +787,40 @@ export function ReviewSession({
                       </button>
 
                       {(studyMode !== 'listening' || listeningPeeked) && (
-                        <button
-                          type="button"
-                          onClick={() => speakText(parsedCloze.cleanSentence)}
-                          className="inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
-                          style={{
-                            color: 'var(--text-secondary)',
-                            border: '1px solid var(--border-subtle)',
-                          }}
-                        >
-                          <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
-                          <span>Dengar Audio</span>
-                          <kbd
-                            className="hidden md:inline-block rounded px-1 py-0.5 text-[11px] font-mono-code"
-                            style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)' }}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => onChangeAccent(accent === 'en-US' ? 'en-GB' : 'en-US')}
+                            aria-label={`Aksen pelafalan ${accent === 'en-US' ? 'US' : 'UK'} aktif. Beralih ke aksen ${accent === 'en-US' ? 'UK' : 'US'}.`}
+                            title="Ganti aksen pelafalan"
+                            className="inline-flex min-h-11 sm:min-h-9 items-center rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-hover)]"
+                            style={{
+                              backgroundColor: 'var(--bg-subtle)',
+                              color: 'var(--text-secondary)',
+                            }}
                           >
-                            R
-                          </kbd>
-                        </button>
+                            Aksen: {accent === 'en-US' ? 'US' : 'UK'}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => speakText(parsedCloze.cleanSentence)}
+                            className="inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
+                            style={{
+                              color: 'var(--text-secondary)',
+                              border: '1px solid var(--border-subtle)',
+                            }}
+                          >
+                            <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
+                            <span>Dengar Audio</span>
+                            <kbd
+                              className="hidden md:inline-block rounded px-1 py-0.5 text-[11px] font-mono-code"
+                              style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)' }}
+                            >
+                              R
+                            </kbd>
+                          </button>
+                        </div>
                       )}
                     </div>
 
@@ -888,7 +908,8 @@ export function ReviewSession({
 
                         <button
                           type="button"
-                          onClick={() => onChangeAccent(accent === 'en-GB' ? 'en-US' : 'en-GB')}
+                          onClick={() => onChangeAccent(accent === 'en-US' ? 'en-GB' : 'en-US')}
+                          aria-label={`Aksen ${accent === 'en-US' ? 'US' : 'UK'} aktif. Beralih ke aksen ${accent === 'en-US' ? 'UK' : 'US'}.`}
                           className="min-h-11 sm:min-h-9 rounded-xl px-2.5 py-2 text-xs font-semibold transition-colors hover:bg-[var(--bg-hover)]"
                           style={{
                             backgroundColor: 'var(--bg-subtle)',
@@ -896,7 +917,7 @@ export function ReviewSession({
                           }}
                           title="Ganti aksen pelafalan"
                         >
-                          {accent === 'en-GB' ? 'UK' : 'US'}
+                          {accent === 'en-US' ? 'US' : 'UK'}
                         </button>
 
                         <button

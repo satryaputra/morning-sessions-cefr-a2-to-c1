@@ -1,0 +1,545 @@
+import { useEffect, useState } from 'react';
+import {
+  Volume2,
+  Loader2,
+  ChevronDown,
+  AudioLines,
+  Check,
+} from 'lucide-react';
+import type {
+  ElevenLabsModelId,
+  ElevenLabsSettings,
+  SpeechAccent,
+  SpeechRate,
+  TtsProvider,
+} from '../types';
+import {
+  ELEVENLABS_MODELS,
+  ELEVENLABS_VOICES,
+  isElevenLabsConfigured,
+  loadElevenLabsApiKey,
+  type ServerTtsStatus,
+} from '../speech/elevenlabs';
+import { clearAudioCache, getCachedAudioCount } from '../speech/audioCache';
+import { speakEnglish } from '../speech/tts';
+
+export interface VoiceSettingsPanelProps {
+  accent: SpeechAccent;
+  speechRate: SpeechRate;
+  ttsProvider: TtsProvider;
+  elevenLabs: ElevenLabsSettings;
+  serverStatus: ServerTtsStatus;
+  onChangeAccent: (accent: SpeechAccent) => void;
+  onChangeSpeechRate: (rate: SpeechRate) => void;
+  onChangeProvider: (provider: TtsProvider) => void;
+  onChangeElevenLabs: (next: ElevenLabsSettings) => void;
+  onNotify: (tone: 'success' | 'info' | 'error', text: string) => void;
+  idPrefix?: string;
+}
+
+const US_VOICES = ELEVENLABS_VOICES.filter((v) => v.accent === 'en-US');
+const UK_VOICES = ELEVENLABS_VOICES.filter((v) => v.accent === 'en-GB');
+
+const ACCENT_OPTIONS: Array<{ value: SpeechAccent; label: string; short: string }> = [
+  { value: 'en-US', label: 'American (US)', short: 'en-US' },
+  { value: 'en-GB', label: 'British (UK)', short: 'en-GB' },
+];
+
+const RATE_OPTIONS: Array<{ value: SpeechRate; label: string }> = [
+  { value: 1.0, label: '1.0x Normal' },
+  { value: 0.8, label: '0.8x Lambat' },
+];
+
+const SAMPLE_SENTENCES: Record<SpeechAccent, string> = {
+  'en-US': 'Hearing phrases in natural context helps you recall them effortlessly.',
+  'en-GB': 'A quiet ten-minute daily session makes all the difference to your fluency.',
+};
+
+export function VoiceSettingsPanel({
+  accent,
+  speechRate,
+  ttsProvider,
+  elevenLabs,
+  serverStatus,
+  onChangeAccent,
+  onChangeSpeechRate,
+  onChangeProvider,
+  onChangeElevenLabs,
+  onNotify,
+  idPrefix = 'voice',
+}: VoiceSettingsPanelProps) {
+  const [hasStoredLocalKey, setHasStoredLocalKey] = useState(false);
+  const [cachedCount, setCachedCount] = useState(0);
+  const [testingAccent, setTestingAccent] = useState<SpeechAccent | null>(null);
+  const [loadingAudio, setLoadingAudio] = useState(false);
+  const [lastTestResult, setLastTestResult] = useState<string | null>(null);
+
+  useEffect(() => {
+    const saved = loadElevenLabsApiKey();
+    setHasStoredLocalKey(saved.length > 0);
+    void getCachedAudioCount().then(setCachedCount);
+  }, []);
+
+  const elevenLabsReady = isElevenLabsConfigured(serverStatus, elevenLabs, hasStoredLocalKey);
+  const effectiveProvider: TtsProvider =
+    ttsProvider === 'elevenlabs' && elevenLabsReady ? 'elevenlabs' : 'browser';
+
+  const handleTestVoice = async (targetAccent: SpeechAccent) => {
+    setTestingAccent(targetAccent);
+    setLastTestResult(null);
+
+    await speakEnglish({
+      text: SAMPLE_SENTENCES[targetAccent],
+      accent: targetAccent,
+      rate: speechRate,
+      provider: effectiveProvider,
+      elevenLabs,
+      onLoading: (loading) => setLoadingAudio(loading),
+      onStart: (usedProvider) => {
+        setLastTestResult(
+          usedProvider === 'elevenlabs'
+            ? `Diputar dengan suara studio ElevenLabs (${targetAccent === 'en-US' ? 'US' : 'UK'}).`
+            : `Diputar dengan suara browser (${targetAccent === 'en-US' ? 'US' : 'UK'}).`
+        );
+      },
+      onFallback: (reason) => {
+        setLastTestResult(reason);
+      },
+      onEnd: () => {
+        setTestingAccent(null);
+        setLoadingAudio(false);
+        void getCachedAudioCount().then(setCachedCount);
+      },
+      onError: () => {
+        setTestingAccent(null);
+        setLoadingAudio(false);
+      },
+    });
+  };
+
+  const handleClearCache = async () => {
+    await clearAudioCache();
+    setCachedCount(0);
+    onNotify('info', 'Cache audio lokal dibersihkan.');
+  };
+
+  return (
+    <div className="space-y-5">
+      <fieldset className="border-0 p-0 m-0">
+        <legend
+          className="mb-2 block text-xs font-semibold"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          Aksen Pelafalan
+        </legend>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {ACCENT_OPTIONS.map((option) => {
+            const selected = accent === option.value;
+            const inputId = `${idPrefix}-accent-${option.value}`;
+            return (
+              <div key={option.value} className="relative">
+                <input
+                  id={inputId}
+                  type="radio"
+                  name={`${idPrefix}-accent`}
+                  value={option.value}
+                  checked={selected}
+                  onChange={() => onChangeAccent(option.value)}
+                  className="sr-only peer"
+                />
+                <label
+                  htmlFor={inputId}
+                  className="flex min-h-11 cursor-pointer items-center justify-between gap-2 rounded-xl px-4 py-3 text-xs font-semibold transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--accent-solid)]"
+                  style={{
+                    backgroundColor: selected ? 'var(--accent-soft)' : 'var(--bg-subtle)',
+                    color: selected ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    border: selected
+                      ? '1.5px solid var(--accent-solid)'
+                      : '1.5px solid transparent',
+                  }}
+                >
+                  <span>{option.label}</span>
+                  {selected && (
+                    <Check
+                      className="h-3.5 w-3.5 shrink-0"
+                      style={{ color: 'var(--accent-text)' }}
+                      strokeWidth={2.5}
+                      aria-hidden="true"
+                    />
+                  )}
+                </label>
+              </div>
+            );
+          })}
+        </div>
+      </fieldset>
+
+      <fieldset className="border-0 p-0 m-0">
+        <legend
+          className="mb-2 block text-xs font-semibold"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          Kecepatan Audio
+        </legend>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {RATE_OPTIONS.map((option) => {
+            const selected = speechRate === option.value;
+            const inputId = `${idPrefix}-rate-${option.value}`;
+            return (
+              <div key={option.value} className="relative">
+                <input
+                  id={inputId}
+                  type="radio"
+                  name={`${idPrefix}-rate`}
+                  value={String(option.value)}
+                  checked={selected}
+                  onChange={() => onChangeSpeechRate(option.value)}
+                  className="sr-only peer"
+                />
+                <label
+                  htmlFor={inputId}
+                  className="flex min-h-11 cursor-pointer items-center justify-between gap-2 rounded-xl px-4 py-3 text-xs font-semibold tabular-nums transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--accent-solid)]"
+                  style={{
+                    backgroundColor: selected ? 'var(--accent-soft)' : 'var(--bg-subtle)',
+                    color: selected ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    border: selected
+                      ? '1.5px solid var(--accent-solid)'
+                      : '1.5px solid transparent',
+                  }}
+                >
+                  <span>{option.label}</span>
+                  {selected && (
+                    <Check
+                      className="h-3.5 w-3.5 shrink-0"
+                      style={{ color: 'var(--accent-text)' }}
+                      strokeWidth={2.5}
+                      aria-hidden="true"
+                    />
+                  )}
+                </label>
+              </div>
+            );
+          })}
+        </div>
+      </fieldset>
+
+      <fieldset className="border-0 p-0 m-0">
+        <legend
+          className="mb-2 block text-xs font-semibold"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          Mesin Suara
+        </legend>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="relative">
+            <input
+              type="radio"
+              id={`${idPrefix}-provider-browser`}
+              name={`${idPrefix}-provider`}
+              value="browser"
+              checked={effectiveProvider === 'browser'}
+              onChange={() => onChangeProvider('browser')}
+              className="sr-only peer"
+            />
+            <label
+              htmlFor={`${idPrefix}-provider-browser`}
+              className="block h-full cursor-pointer rounded-xl p-4 text-left transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--accent-solid)]"
+              style={{
+                backgroundColor:
+                  effectiveProvider === 'browser' ? 'var(--accent-soft)' : 'var(--bg-subtle)',
+                border:
+                  effectiveProvider === 'browser'
+                    ? '1.5px solid var(--accent-solid)'
+                    : '1.5px solid transparent',
+              }}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-bold">Browser Standar</span>
+                <span
+                  className="rounded-md px-2 py-0.5 text-[11px] font-semibold"
+                  style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-muted)' }}
+                >
+                  Gratis
+                </span>
+              </div>
+              <p className="mt-1.5 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                Web Speech API bawaan perangkat: cepat, gratis, dan bisa dipakai offline.
+              </p>
+            </label>
+          </div>
+
+          <div className="relative">
+            <input
+              type="radio"
+              id={`${idPrefix}-provider-elevenlabs`}
+              name={`${idPrefix}-provider`}
+              value="elevenlabs"
+              disabled={!elevenLabsReady}
+              checked={effectiveProvider === 'elevenlabs'}
+              onChange={() => {
+                if (elevenLabsReady) onChangeProvider('elevenlabs');
+              }}
+              className="sr-only peer"
+            />
+            <label
+              htmlFor={`${idPrefix}-provider-elevenlabs`}
+              data-disabled={!elevenLabsReady ? 'true' : undefined}
+              aria-disabled={!elevenLabsReady ? 'true' : undefined}
+              className={`block h-full rounded-xl p-4 text-left transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--accent-solid)] ${
+                elevenLabsReady ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
+              }`}
+              style={{
+                backgroundColor:
+                  effectiveProvider === 'elevenlabs' ? 'var(--accent-soft)' : 'var(--bg-subtle)',
+                border:
+                  effectiveProvider === 'elevenlabs'
+                    ? '1.5px solid var(--accent-solid)'
+                    : !elevenLabsReady
+                      ? '1.5px solid var(--border-subtle)'
+                      : '1.5px solid transparent',
+              }}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-1.5 text-sm font-bold">
+                  <AudioLines
+                    className="h-3.5 w-3.5"
+                    style={{
+                      color: elevenLabsReady ? 'var(--accent-text)' : 'var(--text-muted)',
+                    }}
+                    aria-hidden="true"
+                  />
+                  ElevenLabs
+                </span>
+                <span
+                  className="rounded-md px-2 py-0.5 text-[11px] font-semibold"
+                  style={
+                    elevenLabsReady
+                      ? {
+                          backgroundColor: 'var(--accent-solid)',
+                          color: 'var(--text-on-accent)',
+                        }
+                      : {
+                          backgroundColor: 'var(--bg-surface)',
+                          color: 'var(--text-muted)',
+                        }
+                  }
+                >
+                  {elevenLabsReady ? 'Natural' : 'Tidak aktif'}
+                </span>
+              </div>
+              <p className="mt-1.5 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                {elevenLabsReady
+                  ? 'Suara aksen Amerika dan Inggris yang natural, lengkap dengan cache audio lokal.'
+                  : 'Belum terkonfigurasi. Atur ELEVENLABS_API_KEY di server untuk mengaktifkan.'}
+              </p>
+            </label>
+          </div>
+        </div>
+      </fieldset>
+
+      {effectiveProvider === 'elevenlabs' && (
+        <div className="space-y-5 animate-card-reveal">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label
+                htmlFor={`${idPrefix}-us-voice`}
+                className="block text-xs font-semibold"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Suara American (US){accent === 'en-US' ? ' • Aktif' : ''}
+              </label>
+              <select
+                id={`${idPrefix}-us-voice`}
+                value={elevenLabs.usVoiceId}
+                onChange={(e) =>
+                  onChangeElevenLabs({ ...elevenLabs, usVoiceId: e.target.value })
+                }
+                className="w-full min-h-11 sm:min-h-9 rounded-xl px-3 py-2 text-base sm:text-xs font-medium"
+                style={{
+                  backgroundColor: 'var(--bg-subtle)',
+                  border: '1px solid var(--border-strong)',
+                  color: 'var(--text-primary)',
+                }}
+              >
+                {US_VOICES.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name} ({v.styleLabel})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor={`${idPrefix}-uk-voice`}
+                className="block text-xs font-semibold"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Suara British (UK){accent === 'en-GB' ? ' • Aktif' : ''}
+              </label>
+              <select
+                id={`${idPrefix}-uk-voice`}
+                value={elevenLabs.ukVoiceId}
+                onChange={(e) =>
+                  onChangeElevenLabs({ ...elevenLabs, ukVoiceId: e.target.value })
+                }
+                className="w-full min-h-11 sm:min-h-9 rounded-xl px-3 py-2 text-base sm:text-xs font-medium"
+                style={{
+                  backgroundColor: 'var(--bg-subtle)',
+                  border: '1px solid var(--border-strong)',
+                  color: 'var(--text-primary)',
+                }}
+              >
+                {UK_VOICES.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name} ({v.styleLabel})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <span className="block text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+              Model Suara ElevenLabs
+            </span>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {ELEVENLABS_MODELS.map((model) => {
+                const selected = elevenLabs.modelId === model.id;
+                return (
+                  <button
+                    key={model.id}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() =>
+                      onChangeElevenLabs({
+                        ...elevenLabs,
+                        modelId: model.id as ElevenLabsModelId,
+                      })
+                    }
+                    className="min-h-11 rounded-xl p-4 text-left transition-colors"
+                    style={{
+                      backgroundColor: selected ? 'var(--accent-soft)' : 'var(--bg-subtle)',
+                      border: selected
+                        ? '1.5px solid var(--accent-solid)'
+                        : '1.5px solid transparent',
+                    }}
+                  >
+                    <div className="text-xs font-bold">{model.label}</div>
+                    <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                      {model.desc}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <details className="rounded-xl px-4 py-3" style={{ backgroundColor: 'var(--bg-subtle)' }}>
+            <summary
+              className="flex min-h-11 sm:min-h-9 cursor-pointer list-none items-center justify-between text-xs font-semibold"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              <span>Opsi Lanjutan (Custom Proxy Endpoint)</span>
+              <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+            </summary>
+            <div className="mt-3 space-y-2">
+              <label
+                htmlFor={`${idPrefix}-custom-proxy`}
+                className="block text-xs"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                Kosongkan untuk memakai proxy bawaan (<code className="font-mono-code">/api/tts/elevenlabs</code>). Isi jika Anda men-deploy proxy sendiri.
+              </label>
+              <input
+                id={`${idPrefix}-custom-proxy`}
+                type="url"
+                value={elevenLabs.customProxyUrl}
+                onChange={(e) =>
+                  onChangeElevenLabs({ ...elevenLabs, customProxyUrl: e.target.value })
+                }
+                placeholder="https://proxy-anda.workers.dev/api/tts/elevenlabs"
+                className="w-full min-h-11 sm:min-h-9 rounded-xl px-3 py-2 font-mono-code text-base sm:text-xs"
+                style={{
+                  backgroundColor: 'var(--bg-surface)',
+                  border: '1px solid var(--border-strong)',
+                  color: 'var(--text-primary)',
+                }}
+              />
+            </div>
+          </details>
+        </div>
+      )}
+
+      <div
+        className="space-y-3 pt-5"
+        style={{ borderTop: '1px solid var(--border-subtle)' }}
+      >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            disabled={loadingAudio}
+            onClick={() => void handleTestVoice('en-US')}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-semibold transition-colors disabled:opacity-60 hover:bg-[var(--bg-hover)]"
+            style={{
+              backgroundColor: 'var(--bg-subtle)',
+              border: '1px solid var(--border-strong)',
+              color: 'var(--text-primary)',
+            }}
+          >
+            {loadingAudio && testingAccent === 'en-US' ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <Volume2 className="h-4 w-4" aria-hidden="true" />
+            )}
+            <span>Tes Suara US</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={loadingAudio}
+            onClick={() => void handleTestVoice('en-GB')}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-semibold transition-colors disabled:opacity-60 hover:bg-[var(--bg-hover)]"
+            style={{
+              backgroundColor: 'var(--bg-subtle)',
+              border: '1px solid var(--border-strong)',
+              color: 'var(--text-primary)',
+            }}
+          >
+            {loadingAudio && testingAccent === 'en-GB' ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <Volume2 className="h-4 w-4" aria-hidden="true" />
+            )}
+            <span>Tes Suara UK</span>
+          </button>
+        </div>
+
+        {lastTestResult && (
+          <p
+            className="rounded-xl px-4 py-3 text-xs text-pretty"
+            style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-secondary)' }}
+          >
+            {lastTestResult}
+          </p>
+        )}
+
+        <div className="flex items-center justify-between gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+          <span className="tabular-nums">
+            Cache audio lokal: <strong style={{ color: 'var(--text-primary)' }}>{cachedCount}</strong> klip tersimpan
+          </span>
+          {cachedCount > 0 && (
+            <button
+              type="button"
+              onClick={() => void handleClearCache()}
+              className="min-h-11 sm:min-h-8 px-2 -mr-2 rounded-lg font-semibold hover:underline"
+              style={{ color: 'var(--accent-text)' }}
+            >
+              Hapus Cache
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

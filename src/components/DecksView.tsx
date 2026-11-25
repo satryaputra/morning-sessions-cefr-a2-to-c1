@@ -130,7 +130,7 @@ export function DecksView({
           Deck Siap Pakai
         </h1>
         <p className="mt-1 text-sm text-pretty" style={{ color: 'var(--text-secondary)' }}>
-          Aktifkan deck yang sesuai dengan fase belajar Anda dan atur ritme kartu baru harian.
+          Aktifkan deck yang sesuai dengan mode belajar Anda dan atur ritme kartu baru harian.
         </p>
       </section>
 

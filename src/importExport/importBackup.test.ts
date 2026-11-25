@@ -76,11 +76,12 @@ describe('Backup Serialization & Storage Persistence', () => {
       translationId: 'sisi positif',
       partOfSpeech: 'idiom',
       cefr: 'B2',
-      notes: 'Dari BBC 6 Minute English',
+      notes: 'Dari podcast bahasa Inggris',
       isCustom: true,
     });
 
     const json = serializeBackup(nextState, now);
+    expect(JSON.parse(json).app).toBe('vocab-srs');
     const restored = parseBackup(json);
 
     expect(restored.ok).toBe(true);
@@ -93,9 +94,13 @@ describe('Backup Serialization & Storage Persistence', () => {
       );
       expect(restored.payload.state.customCards).toHaveLength(1);
     }
+
+    const legacyPayload = JSON.parse(json) as Record<string, unknown>;
+    legacyPayload.app = 'PagiKata';
+    expect(parseBackup(JSON.stringify(legacyPayload)).ok).toBe(true);
   });
 
-  it('rejects malformed or non-PagiKata JSON files safely', () => {
+  it('rejects malformed or unrecognized JSON backup files safely', () => {
     const invalidJson = parseBackup('{not-json');
     expect(invalidJson.ok).toBe(false);
 
@@ -103,7 +108,7 @@ describe('Backup Serialization & Storage Persistence', () => {
     expect(wrongApp.ok).toBe(false);
 
     const futureVersion = parseBackup(
-      JSON.stringify({ app: 'PagiKata', schemaVersion: 99, state: {} })
+      JSON.stringify({ app: 'vocab-srs', schemaVersion: 99, state: {} })
     );
     expect(futureVersion.ok).toBe(false);
   });

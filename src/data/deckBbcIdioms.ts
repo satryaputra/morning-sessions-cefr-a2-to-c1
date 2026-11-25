@@ -14,7 +14,7 @@ export const DECK_BBC_IDIOMS_CARDS: VocabCard[] = [
     translationId: 'mulai lihai / mulai menguasai caranya',
     partOfSpeech: 'idiom',
     cefr: 'B2',
-    notes: 'Sangat sering muncul di BBC 6 Minute English saat membahas belajar kebiasaan atau keterampilan baru.',
+    notes: 'Sangat sering muncul dalam podcast bahasa Inggris saat membahas belajar kebiasaan atau keterampilan baru.',
   },
   {
     id: 'bbc-id-02',
@@ -62,7 +62,7 @@ export const DECK_BBC_IDIOMS_CARDS: VocabCard[] = [
     translationId: 'baru puncak gunung es (sebagian kecil masalah)',
     partOfSpeech: 'idiom',
     cefr: 'B2',
-    notes: 'Klasik dalam liputan berita BBC tentang lingkungan, ekonomi, dan isu sosial.',
+    notes: 'Klasik dalam liputan berita tentang lingkungan, ekonomi, dan isu sosial.',
   },
   {
     id: 'bbc-id-06',
@@ -134,7 +134,7 @@ export const DECK_BBC_IDIOMS_CARDS: VocabCard[] = [
     translationId: 'bahan renungan / pemikiran menarik',
     partOfSpeech: 'idiom',
     cefr: 'B2',
-    notes: 'Sering ditutup di akhir diskusi atau episode BBC: "Definitely food for thought!"',
+    notes: 'Sering ditutup di akhir diskusi atau podcast: "Definitely food for thought!"',
   },
   {
     id: 'bbc-id-12',
@@ -242,7 +242,7 @@ export const DECK_BBC_IDIOMS_CARDS: VocabCard[] = [
     translationId: 'lebih mudah diucapkan daripada dilakukan',
     partOfSpeech: 'idiom',
     cefr: 'B1',
-    notes: 'Sangat sering dipakai di presenter dialogue BBC Learning English.',
+    notes: 'Sangat sering dipakai dalam dialog percakapan sehari-hari.',
   },
   {
     id: 'bbc-id-21',
@@ -302,7 +302,7 @@ export const DECK_BBC_IDIOMS_CARDS: VocabCard[] = [
     translationId: 'berpikir kreatif di luar kebiasaan',
     partOfSpeech: 'idiom',
     cefr: 'B2',
-    notes: 'Sering muncul dalam wawancara bisnis dan inovasi BBC.',
+    notes: 'Sering muncul dalam wawancara bisnis dan topik inovasi.',
   },
   {
     id: 'bbc-id-26',
@@ -362,7 +362,7 @@ export const DECK_BBC_IDIOMS_CARDS: VocabCard[] = [
     translationId: 'singkatnya / intinya',
     partOfSpeech: 'idiom',
     cefr: 'B2',
-    notes: 'Penanda ringkasan favorit para penyiar BBC saat merangkum topik panjang.',
+    notes: 'Penanda ringkasan favorit para penyiar berita saat merangkum topik panjang.',
   },
   {
     id: 'bbc-id-31',
@@ -386,7 +386,7 @@ export const DECK_BBC_IDIOMS_CARDS: VocabCard[] = [
     translationId: 'mencukupi kebutuhan hidup sehari-hari',
     partOfSpeech: 'idiom',
     cefr: 'B2',
-    notes: 'Sering terdengar di berita BBC tentang biaya hidup (cost of living).',
+    notes: 'Sering terdengar di liputan ekonomi tentang biaya hidup (cost of living).',
   },
   {
     id: 'bbc-id-33',
@@ -548,7 +548,7 @@ export const DECK_BBC_IDIOMS_CARDS: VocabCard[] = [
     id: 'bbc-id-46',
     deckId: DECK_ID,
     phrase: 'in the meantime',
-    sentence: 'The new textbook arrives next week; in the meantime, we can listen to BBC episodes.',
+    sentence: 'The new textbook arrives next week; in the meantime, we can listen to English podcast episodes.',
     ipa: '/ɪn ðə ˈmiːntaɪm/',
     definitionEn: 'during the period of time between now and a future event',
     translationId: 'sementara menunggu / untuk sementara ini',

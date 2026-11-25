@@ -31,12 +31,18 @@ import {
   undoCardReview,
   type UndoSnapshot,
 } from './srs/engine';
-import { checkServerTtsStatus, type ServerTtsStatus } from './speech/elevenlabs';
+import {
+  checkServerTtsStatus,
+  isElevenLabsConfigured,
+  loadElevenLabsApiKey,
+  type ServerTtsStatus,
+} from './speech/elevenlabs';
 import { AppHeader } from './components/AppHeader';
 import { TodayView } from './components/TodayView';
 import { DecksView } from './components/DecksView';
 import { AddImportView } from './components/AddImportView';
 import { ProgressView } from './components/ProgressView';
+import { SettingsView } from './components/SettingsView';
 import { ReviewSession } from './components/ReviewSession';
 import { VoiceSettingsModal } from './components/VoiceSettingsModal';
 import { Toast, type ToastMessage } from './components/Toast';
@@ -47,6 +53,7 @@ export default function App() {
   const [inReviewSession, setInReviewSession] = useState(false);
   const [sessionInitialQueue, setSessionInitialQueue] = useState<VocabCard[]>([]);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [serverTtsChecked, setServerTtsChecked] = useState(false);
   const [serverTtsStatus, setServerTtsStatus] = useState<ServerTtsStatus>({
     available: false,
     serverConfigured: false,
@@ -60,6 +67,7 @@ export default function App() {
     void checkServerTtsStatus().then((status) => {
       if (!active) return;
       setServerTtsStatus(status);
+      setServerTtsChecked(true);
     });
     return () => {
       active = false;
@@ -68,6 +76,29 @@ export default function App() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!serverTtsChecked) return;
+    const ready = isElevenLabsConfigured(
+      serverTtsStatus,
+      state.settings.elevenLabs,
+      loadElevenLabsApiKey().length > 0
+    );
+    if (state.settings.ttsProvider === 'elevenlabs' && !ready) {
+      setState((prev) => ({
+        ...prev,
+        settings: {
+          ...prev.settings,
+          ttsProvider: 'browser',
+        },
+      }));
+    }
+  }, [
+    serverTtsChecked,
+    serverTtsStatus,
+    state.settings.ttsProvider,
+    state.settings.elevenLabs,
+  ]);
 
   const notify = useCallback((tone: ToastMessage['tone'], text: string) => {
     if (toastTimerRef.current !== null) {
@@ -124,10 +155,9 @@ export default function App() {
       decks: 'Deck',
       add: 'Tambah & Import',
       progress: 'Progres',
+      settings: 'Setelan',
     };
-    document.title = inReviewSession
-      ? 'Sesi Review · PagiKata'
-      : `${tabTitles[activeTab]} · PagiKata`;
+    document.title = inReviewSession ? 'Sesi Review' : tabTitles[activeTab];
   }, [activeTab, inReviewSession]);
 
   const allDecks: DeckDefinition[] = useMemo(() => {
@@ -211,7 +241,7 @@ export default function App() {
 
     notify(
       'success',
-      `Fase ${phase.monthsLabel} (${phase.cefrTarget}) aktif. Deck rekomendasi otomatis dipilih.`
+      `${phase.title} (${phase.cefrTarget}) aktif. Deck rekomendasi otomatis dipilih.`
     );
   };
 
@@ -388,11 +418,14 @@ export default function App() {
   const voiceModal = (
     <VoiceSettingsModal
       isOpen={isVoiceModalOpen}
+      accent={state.settings.accent}
+      speechRate={state.settings.speechRate}
       ttsProvider={state.settings.ttsProvider}
       elevenLabs={state.settings.elevenLabs}
-      speechRate={state.settings.speechRate}
       serverStatus={serverTtsStatus}
       onClose={() => setIsVoiceModalOpen(false)}
+      onChangeAccent={handleChangeAccent}
+      onChangeSpeechRate={handleChangeSpeechRate}
       onChangeProvider={handleChangeTtsProvider}
       onChangeElevenLabs={handleChangeElevenLabs}
       onNotify={notify}
@@ -437,8 +470,8 @@ export default function App() {
         isDark={isDark}
         onToggleTheme={handleToggleTheme}
         dueBadgeCount={queueInfo.totalCount}
-        ttsProvider={state.settings.ttsProvider}
-        onOpenVoiceSettings={() => setIsVoiceModalOpen(true)}
+        accent={state.settings.accent}
+        onChangeAccent={handleChangeAccent}
       />
 
       <main
@@ -451,12 +484,12 @@ export default function App() {
             queueInfo={queueInfo}
             phaseId={state.settings.phaseId}
             studyMode={state.settings.studyMode}
+            accent={state.settings.accent}
             streak={stats.currentStreak}
             dailyNewLimit={state.settings.dailyNewLimit}
             activeDecks={activeDecks}
             onStartReview={handleStartReview}
             onAddExtraCards={handleAddExtraFromToday}
-            onChangePhase={handleChangePhase}
             onChangeStudyMode={handleChangeStudyMode}
             onGoToDecks={() => setActiveTab('decks')}
           />
@@ -493,6 +526,23 @@ export default function App() {
             stats={stats}
             onRestoreState={handleRestoreState}
             onResetProgress={handleResetProgress}
+            onNotify={notify}
+          />
+        )}
+
+        {activeTab === 'settings' && (
+          <SettingsView
+            phaseId={state.settings.phaseId}
+            accent={state.settings.accent}
+            speechRate={state.settings.speechRate}
+            ttsProvider={state.settings.ttsProvider}
+            elevenLabs={state.settings.elevenLabs}
+            serverStatus={serverTtsStatus}
+            onChangePhase={handleChangePhase}
+            onChangeAccent={handleChangeAccent}
+            onChangeSpeechRate={handleChangeSpeechRate}
+            onChangeProvider={handleChangeTtsProvider}
+            onChangeElevenLabs={handleChangeElevenLabs}
             onNotify={notify}
           />
         )}

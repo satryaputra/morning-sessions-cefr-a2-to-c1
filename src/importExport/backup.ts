@@ -20,7 +20,7 @@ export interface ParsedBackupError {
 
 export function serializeBackup(state: AppState, now: Date = new Date()): string {
   const payload: BackupPayload = {
-    app: 'PagiKata',
+    app: 'vocab-srs',
     schemaVersion: CURRENT_SCHEMA_VERSION,
     exportedAt: now.toISOString(),
     state,
@@ -36,10 +36,10 @@ export function parseBackup(jsonText: string): ParsedBackupResult | ParsedBackup
     }
 
     const record = parsed as Record<string, unknown>;
-    if (record.app !== 'PagiKata') {
+    if (record.app !== 'vocab-srs' && record.app !== 'PagiKata') {
       return {
         ok: false,
-        error: 'File ini bukan backup PagiKata yang dikenali.',
+        error: 'File ini bukan file backup yang dikenali.',
       };
     }
 
@@ -67,7 +67,7 @@ export function parseBackup(jsonText: string): ParsedBackupResult | ParsedBackup
     return {
       ok: true,
       payload: {
-        app: 'PagiKata',
+        app: 'vocab-srs',
         schemaVersion: CURRENT_SCHEMA_VERSION,
         exportedAt,
         state: normalizedState,

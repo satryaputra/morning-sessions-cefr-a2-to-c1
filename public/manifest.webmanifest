@@ -1,7 +1,7 @@
 {
-  "name": "PagiKata · Review Kosakata Pagi",
-  "short_name": "PagiKata",
-  "description": "Review kosakata bahasa Inggris pagi berbasis Spaced Repetition (FSRS) untuk kurikulum A2 ke C1.",
+  "name": "Latihan Kosakata",
+  "short_name": "Kosakata",
+  "description": "Review kosakata bahasa Inggris berbasis Spaced Repetition (FSRS) untuk level A2 hingga C1.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",

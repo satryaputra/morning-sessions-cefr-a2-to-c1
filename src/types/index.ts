@@ -27,7 +27,7 @@ export type ReviewRatingKey = 'again' | 'hard' | 'good' | 'easy';
 
 export type MasteryBucket = 'new' | 'learning' | 'mastering' | 'memorized';
 
-export type NavTab = 'today' | 'decks' | 'add' | 'progress';
+export type NavTab = 'today' | 'decks' | 'add' | 'progress' | 'settings';
 
 export interface VocabCard {
   id: string;
@@ -127,7 +127,7 @@ export interface AppState {
 }
 
 export interface BackupPayload {
-  app: 'PagiKata';
+  app: 'vocab-srs' | 'PagiKata';
   schemaVersion: 1;
   exportedAt: string;
   state: AppState;

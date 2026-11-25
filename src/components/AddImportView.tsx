@@ -200,7 +200,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
           Tambah & Import Kartu
         </h1>
         <p className="text-sm text-pretty" style={{ color: 'var(--text-secondary)' }}>
-          4 deck siap pakai sudah cukup untuk rutinitas pagi Anda. Fitur ini opsional: gunakan saat menemukan kalimat bagus dari BBC atau ingin mengimpor daftar CSV/TSV.
+          4 deck siap pakai sudah cukup untuk rutinitas harian Anda. Fitur ini opsional: gunakan saat menemukan kalimat bagus dari bacaan atau ingin mengimpor daftar CSV/TSV.
         </p>
       </section>
 
@@ -329,7 +329,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                   type="text"
                   value={newDeckName}
                   onChange={(e) => setNewDeckName(e.target.value)}
-                  placeholder="Contoh: Catatan BBC Minggu 4"
+                  placeholder="Contoh: Catatan Minggu 4"
                   className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm"
                   style={{
                     backgroundColor: 'var(--bg-subtle)',
@@ -401,7 +401,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                 rows={6}
                 value={rawText}
                 onChange={(e) => setRawText(e.target.value)}
-                placeholder={'phrase,sentence,translation,cefr\nget the hang of,"I soon managed to get the hang of British idioms.",mulai menguasai,B2'}
+                placeholder={'phrase,sentence,translation,cefr\nget the hang of,"I soon managed to get the hang of natural idioms.",mulai menguasai,B2'}
                 className="w-full rounded-xl p-3.5 font-mono-code text-base sm:text-xs leading-relaxed"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
@@ -525,7 +525,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
               className="block text-xs font-semibold"
               style={{ color: 'var(--text-secondary)' }}
             >
-              1. Tempel kalimat bahasa Inggris dari BBC / bacaan
+              1. Tempel kalimat bahasa Inggris dari bacaan atau podcast
             </label>
             <textarea
               id="qc-sentence"
@@ -760,7 +760,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                 type="text"
                 value={qcNotes}
                 onChange={(e) => setQcNotes(e.target.value)}
-                placeholder="BBC 6 Minute English"
+                placeholder="Podcast atau bacaan"
                 className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',

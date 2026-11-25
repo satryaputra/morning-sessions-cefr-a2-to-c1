@@ -530,7 +530,7 @@ export const DECK_OXFORD_C1_CARDS: VocabCard[] = [
     translationId: 'memberi pencerahan / mengungkap kejelasan',
     partOfSpeech: 'collocation',
     cefr: 'C1',
-    notes: 'Sangat umum di artikel sains dan jurnalisme BBC Future.',
+    notes: 'Sangat umum di artikel sains dan jurnalisme populer.',
   },
   {
     id: 'ox5k-c1-45',
