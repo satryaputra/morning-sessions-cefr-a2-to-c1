@@ -74,7 +74,7 @@ export const DECK_OXFORD_C1_CARDS: VocabCard[] = [
     translationId: 'memperburuk / memperparah',
     partOfSpeech: 'verb',
     cefr: 'C1',
-    notes: 'Lawan fungsi dari "mitigate" — selalu digunakan untuk hal negatif/masalah.',
+    notes: 'Lawan fungsi dari "mitigate": selalu digunakan untuk hal negatif atau masalah.',
   },
   {
     id: 'ox5k-c1-07',

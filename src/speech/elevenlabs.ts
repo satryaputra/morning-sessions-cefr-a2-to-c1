@@ -263,7 +263,7 @@ export async function synthesizeElevenLabsAudio(
     if (response.status === 429) {
       throw new ElevenLabsTtsError(
         'quota_exceeded',
-        payload.error || 'Kuota ElevenLabs tercapai — sementara beralih ke suara browser.'
+        payload.error || 'Kuota ElevenLabs tercapai, sementara beralih ke suara browser.'
       );
     }
 

@@ -261,7 +261,7 @@ export function parseVocabImport(
 
     if (!sentence) {
       sentence = `I want to use "${phrase}" naturally in my next conversation.`;
-      warnings.push(`Baris ${rowNum} ("${phrase}") tidak memiliki kalimat konteks — dibuatkan kalimat standar.`);
+      warnings.push(`Baris ${rowNum} ("${phrase}") tidak memiliki kalimat konteks, dibuatkan kalimat standar.`);
     }
 
     const cleanSentence = stripClozeMarkup(sentence);

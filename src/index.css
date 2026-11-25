@@ -3,61 +3,61 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  /* Surfaces — Warm Morning Paper & Ink */
+  /* Surfaces: Warm Morning Paper & Ink */
   --bg-canvas: oklch(0.974 0.011 82);
-  --bg-surface: oklch(0.995 0.005 82);
+  --bg-surface: oklch(0.995 0.002 82);
   --bg-subtle: oklch(0.946 0.014 80);
   --bg-hover: oklch(0.922 0.016 80);
 
   /* Borders */
   --border-subtle: oklch(0.885 0.014 78);
-  --border-strong: oklch(0.745 0.018 76);
+  --border-strong: oklch(0.58 0.015 76);
 
   /* Ink Typography */
   --text-primary: oklch(0.215 0.012 70);
   --text-secondary: oklch(0.425 0.014 70);
   --text-muted: oklch(0.515 0.014 72);
 
-  /* Primary Accent — Calm British Botanical Teal (hue ~174°) */
-  --accent-solid: oklch(0.415 0.084 174);
-  --accent-solid-hover: oklch(0.365 0.084 174);
+  /* Primary Accent: Calm British Botanical Teal (hue ~174deg) */
+  --accent-solid: oklch(0.415 0.074 174);
+  --accent-solid-hover: oklch(0.365 0.066 174);
   --accent-soft: oklch(0.935 0.028 174);
   --accent-border: oklch(0.79 0.052 174);
-  --accent-text: oklch(0.345 0.082 174);
-  --text-on-accent: oklch(0.99 0.005 174);
+  --accent-text: oklch(0.345 0.062 174);
+  --text-on-accent: oklch(0.99 0.004 174);
 
-  /* Warm Morning Sun / Streak (hue ~68°) */
+  /* Warm Morning Sun / Streak (hue ~68deg) */
   --sun-soft: oklch(0.945 0.042 74);
-  --sun-text: oklch(0.44 0.115 62);
+  --sun-text: oklch(0.44 0.095 62);
   --sun-border: oklch(0.84 0.07 72);
 
-  /* Rating Buttons (distinct hues spaced >15° apart) */
-  --rate-again-bg: oklch(0.955 0.025 22);
-  --rate-again-hover: oklch(0.92 0.042 22);
+  /* Rating Buttons (distinct hues spaced >15deg apart) */
+  --rate-again-bg: oklch(0.955 0.02 22);
+  --rate-again-hover: oklch(0.92 0.04 22);
   --rate-again-border: oklch(0.83 0.068 22);
   --rate-again-text: oklch(0.43 0.145 22);
 
-  --rate-hard-bg: oklch(0.955 0.032 68);
-  --rate-hard-hover: oklch(0.92 0.052 68);
+  --rate-hard-bg: oklch(0.955 0.025 68);
+  --rate-hard-hover: oklch(0.92 0.048 68);
   --rate-hard-border: oklch(0.83 0.075 68);
-  --rate-hard-text: oklch(0.43 0.118 60);
+  --rate-hard-text: oklch(0.43 0.095 60);
 
   --rate-good-bg: oklch(0.948 0.03 150);
   --rate-good-hover: oklch(0.91 0.048 150);
   --rate-good-border: oklch(0.81 0.068 150);
-  --rate-good-text: oklch(0.37 0.105 150);
+  --rate-good-text: oklch(0.37 0.095 150);
 
   --rate-easy-bg: oklch(0.95 0.026 238);
   --rate-easy-hover: oklch(0.915 0.044 238);
   --rate-easy-border: oklch(0.82 0.064 238);
-  --rate-easy-text: oklch(0.40 0.11 238);
+  --rate-easy-text: oklch(0.40 0.086 238);
 
   /* Heatmap intensity steps */
   --heat-0: oklch(0.935 0.012 80);
   --heat-1: oklch(0.86 0.048 174);
   --heat-2: oklch(0.73 0.075 174);
-  --heat-3: oklch(0.56 0.088 174);
-  --heat-4: oklch(0.415 0.086 174);
+  --heat-3: oklch(0.485 0.082 174);
+  --heat-4: oklch(0.395 0.070 174);
 
   /* Elevation */
   --shadow-card: 0 1px 2px oklch(0.2 0.01 70 / 0.05), 0 8px 24px -6px oklch(0.2 0.01 70 / 0.07);
@@ -72,7 +72,7 @@
 }
 
 .dark {
-  /* Surfaces — Deep Warm Charcoal Paper */
+  /* Surfaces: Deep Warm Charcoal Paper */
   --bg-canvas: oklch(0.165 0.008 68);
   --bg-surface: oklch(0.215 0.009 68);
   --bg-subtle: oklch(0.258 0.01 68);
@@ -80,7 +80,7 @@
 
   /* Borders */
   --border-subtle: oklch(0.315 0.01 68);
-  --border-strong: oklch(0.455 0.014 70);
+  --border-strong: oklch(0.55 0.014 70);
 
   /* Ink Typography */
   --text-primary: oklch(0.945 0.012 82);
@@ -104,7 +104,7 @@
   --rate-again-bg: oklch(0.26 0.038 22);
   --rate-again-hover: oklch(0.305 0.052 22);
   --rate-again-border: oklch(0.43 0.078 22);
-  --rate-again-text: oklch(0.82 0.115 22);
+  --rate-again-text: oklch(0.82 0.092 22);
 
   --rate-hard-bg: oklch(0.265 0.038 66);
   --rate-hard-hover: oklch(0.31 0.052 66);
@@ -125,12 +125,12 @@
   --heat-0: oklch(0.265 0.01 68);
   --heat-1: oklch(0.34 0.042 174);
   --heat-2: oklch(0.45 0.066 174);
-  --heat-3: oklch(0.57 0.085 174);
+  --heat-3: oklch(0.59 0.086 174);
   --heat-4: oklch(0.69 0.098 174);
 
-  /* Elevation */
-  --shadow-card: 0 1px 2px oklch(0 0 0 / 0.25), 0 10px 26px -8px oklch(0 0 0 / 0.35);
-  --shadow-elevated: 0 2px 8px oklch(0 0 0 / 0.3), 0 18px 40px -12px oklch(0 0 0 / 0.48);
+  /* Dark elevation relies primarily on surface lightness steps and crisp hairlines */
+  --shadow-card: 0 1px 2px oklch(0 0 0 / 0.18);
+  --shadow-elevated: 0 8px 24px -8px oklch(0 0 0 / 0.36);
 
   color-scheme: dark;
 }
@@ -140,6 +140,8 @@
     font-family: var(--font-sans);
     background-color: var(--bg-canvas);
     color: var(--text-primary);
+    scroll-padding-block-start: 4.75rem;
+    scroll-padding-block-end: 5.5rem;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -160,14 +162,51 @@
   }
 
   button:not(:disabled),
-  a[href] {
+  a[href],
+  summary,
+  select:not(:disabled),
+  label[for],
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"],
+  [role="switch"],
+  [role="radio"] {
     cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled,
+  input:disabled {
+    cursor: not-allowed;
   }
 
   :focus-visible {
     outline: 2px solid var(--accent-solid);
     outline-offset: 2px;
   }
+}
+
+/* Suppress CSS transitions for a single paint frame during theme switching */
+.theme-switching,
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: none !important;
+}
+
+.pagikata-dialog {
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  width: min(36rem, calc(100vw - 2rem));
+  max-width: 36rem;
+  max-height: calc(100dvh - 2rem);
+  overflow: visible;
+}
+
+.pagikata-dialog::backdrop {
+  background-color: oklch(0.14 0.01 70 / 0.55);
 }
 
 .font-serif-study {

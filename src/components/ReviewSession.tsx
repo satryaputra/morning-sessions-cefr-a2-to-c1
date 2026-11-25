@@ -9,7 +9,6 @@ import {
   FileText,
   CheckCircle2,
   Plus,
-  Sparkles,
   Flame,
   Gauge,
   AudioLines,
@@ -332,7 +331,7 @@ export function ReviewSession({
     setIsFlipped(true);
     setListeningPeeked(true);
     setCardAnimKey((k) => k + 1);
-    onNotify('info', 'Penilaian terakhir dibatalkan — silakan nilai ulang.');
+    onNotify('info', 'Penilaian terakhir dibatalkan. Silakan nilai ulang.');
   }, [undoStack, onUndoSnapshot, onNotify]);
 
   const handleAddExtraInSession = () => {
@@ -344,7 +343,7 @@ export function ReviewSession({
       setCardAnimKey((k) => k + 1);
       onNotify('success', `${newBatch.length} kartu ekstra ditambahkan ke sesi ini.`);
     } else {
-      onNotify('info', 'Semua kartu di deck aktif sudah Anda pelajari!');
+      onNotify('info', 'Semua kartu di deck aktif sudah Anda pelajari.');
     }
   };
 
@@ -439,6 +438,7 @@ export function ReviewSession({
 
   const totalSteps = sessionReviewed + queue.length;
   const progressPct = totalSteps === 0 ? 100 : Math.round((sessionReviewed / totalSteps) * 100);
+  const progressRatio = totalSteps === 0 ? 1 : sessionReviewed / totalSteps;
   const currentMastery = currentCard ? classifyMastery(state.progress[currentCard.id]) : 'new';
 
   return (
@@ -446,38 +446,41 @@ export function ReviewSession({
       className="min-h-dvh flex flex-col"
       style={{ backgroundColor: 'var(--bg-canvas)', color: 'var(--text-primary)' }}
     >
-      {/* Minimalist Full-Focus Top Bar */}
       <header
-        className="sticky top-0 z-20 backdrop-blur-md"
+        className="sticky top-0 z-20"
         style={{
-          backgroundColor: 'color-mix(in oklab, var(--bg-canvas) 90%, transparent)',
+          backgroundColor: 'var(--bg-surface)',
           borderBottom: '1px solid var(--border-subtle)',
         }}
       >
-        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-3 px-4">
+        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-2 sm:gap-3 px-4">
           <button
             type="button"
             onClick={() => {
               stopSpeaking();
               onExit();
             }}
-            className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-[var(--bg-subtle)]"
+            className="inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-[var(--bg-subtle)]"
             style={{ color: 'var(--text-secondary)' }}
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             <span>Kembali</span>
           </button>
 
-          {/* Progress Track */}
           <div className="flex flex-1 max-w-xs items-center gap-2.5">
             <div
+              role="progressbar"
+              aria-label="Progres sesi review"
+              aria-valuenow={progressPct}
+              aria-valuemin={0}
+              aria-valuemax={100}
               className="h-2 flex-1 overflow-hidden rounded-full"
               style={{ backgroundColor: 'var(--bg-subtle)' }}
             >
               <div
-                className="h-full rounded-full transition-all duration-300"
+                className="h-full w-full origin-left rounded-full transition-transform duration-300"
                 style={{
-                  width: `${progressPct}%`,
+                  transform: `scaleX(${progressRatio})`,
                   backgroundColor: 'var(--accent-solid)',
                 }}
               />
@@ -490,7 +493,6 @@ export function ReviewSession({
             </span>
           </div>
 
-          {/* Right Quick Actions: Undo + Mode */}
           <div className="flex items-center gap-1.5">
             <button
               type="button"
@@ -498,16 +500,16 @@ export function ReviewSession({
               disabled={undoStack.length === 0}
               title="Batalkan penilaian terakhir (Z)"
               aria-label="Undo penilaian terakhir"
-              className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:opacity-35 hover:bg-[var(--bg-subtle)]"
+              className="inline-flex min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 items-center justify-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:opacity-35 hover:bg-[var(--bg-subtle)]"
               style={{
                 border: '1px solid var(--border-subtle)',
                 color: 'var(--text-primary)',
               }}
             >
-              <RotateCcw className="h-3.5 w-3.5" />
+              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
               <span className="hidden sm:inline">Undo</span>
               <kbd
-                className="hidden md:inline-block rounded px-1 py-0.5 text-[10px] font-mono-code"
+                className="hidden md:inline-block rounded px-1 py-0.5 text-[11px] font-mono-code"
                 style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)' }}
               >
                 Z
@@ -519,11 +521,11 @@ export function ReviewSession({
               onClick={onOpenVoiceSettings}
               title={
                 ttsProvider === 'elevenlabs'
-                  ? `Suara ElevenLabs (${activeVoiceName}) — klik untuk atur`
-                  : 'Boost suara natural dengan ElevenLabs'
+                  ? `Suara ElevenLabs (${activeVoiceName}) aktif. Klik untuk atur.`
+                  : 'Atur suara ElevenLabs atau browser'
               }
               aria-label="Pengaturan suara ElevenLabs"
-              className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
+              className="inline-flex min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 items-center justify-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
               style={{
                 backgroundColor:
                   ttsProvider === 'elevenlabs' ? 'var(--accent-soft)' : 'var(--bg-surface)',
@@ -532,7 +534,7 @@ export function ReviewSession({
                 border: '1px solid var(--border-subtle)',
               }}
             >
-              <AudioLines className="h-3.5 w-3.5" />
+              <AudioLines className="h-3.5 w-3.5" aria-hidden="true" />
               <span className="hidden md:inline">
                 {ttsProvider === 'elevenlabs' ? activeVoiceName : 'Suara'}
               </span>
@@ -541,12 +543,17 @@ export function ReviewSession({
             <button
               type="button"
               onClick={() => onChangeStudyMode(studyMode === 'cloze' ? 'listening' : 'cloze')}
+              aria-label={
+                studyMode === 'cloze'
+                  ? 'Mode Cloze aktif. Beralih ke mode Listening First.'
+                  : 'Mode Listening First aktif. Beralih ke mode Cloze.'
+              }
               title={
                 studyMode === 'cloze'
                   ? 'Beralih ke Mode Listening First'
                   : 'Beralih ke Mode Cloze'
               }
-              className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
+              className="inline-flex min-h-11 min-w-11 sm:min-h-9 sm:min-w-9 items-center justify-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
               style={{
                 backgroundColor: studyMode === 'listening' ? 'var(--accent-soft)' : 'var(--bg-surface)',
                 color: studyMode === 'listening' ? 'var(--accent-text)' : 'var(--text-secondary)',
@@ -555,12 +562,12 @@ export function ReviewSession({
             >
               {studyMode === 'listening' ? (
                 <>
-                  <Headphones className="h-3.5 w-3.5" />
+                  <Headphones className="h-3.5 w-3.5" aria-hidden="true" />
                   <span className="hidden sm:inline">Listening</span>
                 </>
               ) : (
                 <>
-                  <FileText className="h-3.5 w-3.5" />
+                  <FileText className="h-3.5 w-3.5" aria-hidden="true" />
                   <span className="hidden sm:inline">Cloze</span>
                 </>
               )}
@@ -569,23 +576,24 @@ export function ReviewSession({
         </div>
       </header>
 
-      {/* Main Centered Study Canvas */}
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-between px-4 py-6 sm:py-10">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-between px-4 py-6 sm:py-10"
+      >
         {currentCard && parsedCloze ? (
           <>
-            {/* Flashcard Container */}
             <div className="flex flex-1 flex-col justify-center">
               <article
                 key={`${currentCard.id}-${cardAnimKey}-${isFlipped ? 'back' : 'front'}`}
-                className={`paper-card-elevated rounded-[28px] p-6 sm:p-9 ${
+                className={`paper-card-elevated rounded-[24px] p-5 sm:p-8 ${
                   isFlipped ? 'animate-card-flip' : 'animate-card-reveal'
                 }`}
               >
-                {/* Card Metadata Bar */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pb-5" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                   <div className="flex flex-wrap items-center gap-2">
                     <span
-                      className="rounded-lg px-2.5 py-1 text-xs font-bold tracking-wide"
+                      className="rounded-lg px-2.5 py-1 text-xs font-bold"
                       style={{
                         backgroundColor: 'var(--accent-soft)',
                         color: 'var(--accent-text)',
@@ -613,26 +621,21 @@ export function ReviewSession({
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="max-w-[160px] truncate text-xs font-medium"
-                      style={{ color: 'var(--text-muted)' }}
-                      title={deckTitleMap.get(currentCard.deckId)}
-                    >
-                      {deckTitleMap.get(currentCard.deckId) ?? 'Deck Aktif'}
-                    </span>
-                  </div>
+                  <span
+                    className="text-xs font-medium text-right leading-snug"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    {deckTitleMap.get(currentCard.deckId) ?? 'Deck Aktif'}
+                  </span>
                 </div>
 
-                {/* FRONT FACE */}
                 {!isFlipped ? (
                   <div className="py-5 sm:py-7 space-y-5">
                     {studyMode === 'listening' && !listeningPeeked ? (
-                      /* Listening-First Audio Front */
                       <div className="flex flex-col items-center text-center space-y-4 py-1">
                         <div className="space-y-1">
                           <p
-                            className="text-xs font-semibold uppercase tracking-[0.06em]"
+                            className="text-xs font-semibold"
                             style={{ color: 'var(--accent-text)' }}
                           >
                             Mode Listening First
@@ -645,16 +648,15 @@ export function ReviewSession({
                         <button
                           type="button"
                           onClick={() => speakText(parsedCloze.cleanSentence)}
-                          className="group flex h-20 w-20 items-center justify-center rounded-full transition-transform active:scale-95"
+                          className="group flex h-20 w-20 items-center justify-center rounded-full transition-transform enabled:active:scale-[0.96]"
                           style={{
                             backgroundColor: 'var(--accent-solid)',
                             color: 'var(--text-on-accent)',
-                            boxShadow: '0 10px 28px -8px oklch(0.415 0.084 174 / 0.5)',
                           }}
                           aria-label="Putar audio kalimat bahasa Inggris"
                         >
                           {isLoadingAudio ? (
-                            <Loader2 className="h-8 w-8 animate-spin" />
+                            <Loader2 className="h-8 w-8 animate-spin" aria-hidden="true" />
                           ) : isSpeaking ? (
                             <span className="flex items-end gap-1 h-7" aria-hidden="true">
                               <span className="w-1.5 h-5 rounded-full bg-current animate-sound-bar" />
@@ -672,16 +674,15 @@ export function ReviewSession({
                               />
                             </span>
                           ) : (
-                            <Volume2 className="h-8 w-8" />
+                            <Volume2 className="h-8 w-8" aria-hidden="true" />
                           )}
                         </button>
 
-                        {/* Accent & Speed Quick Pills */}
                         <div className="flex flex-wrap items-center justify-center gap-2">
                           <button
                             type="button"
                             onClick={() => onChangeAccent(accent === 'en-GB' ? 'en-US' : 'en-GB')}
-                            className="rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-hover)]"
+                            className="min-h-11 sm:min-h-9 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-hover)]"
                             style={{
                               backgroundColor: 'var(--bg-subtle)',
                               color: 'var(--text-primary)',
@@ -692,13 +693,13 @@ export function ReviewSession({
                           <button
                             type="button"
                             onClick={() => onChangeSpeechRate(speechRate === 1.0 ? 0.8 : 1.0)}
-                            className="inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-semibold tabular-nums transition-colors hover:bg-[var(--bg-hover)]"
+                            className="inline-flex min-h-11 sm:min-h-9 items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-semibold tabular-nums transition-colors hover:bg-[var(--bg-hover)]"
                             style={{
                               backgroundColor: 'var(--bg-subtle)',
                               color: 'var(--text-primary)',
                             }}
                           >
-                            <Gauge className="h-3.5 w-3.5" />
+                            <Gauge className="h-3.5 w-3.5" aria-hidden="true" />
                             <span>{speechRate === 1.0 ? '1.0x Normal' : '0.8x Lambat'}</span>
                           </button>
                         </div>
@@ -706,15 +707,14 @@ export function ReviewSession({
                         <button
                           type="button"
                           onClick={() => setListeningPeeked(true)}
-                          className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
+                          className="inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
                           style={{ color: 'var(--accent-text)' }}
                         >
-                          <Eye className="h-3.5 w-3.5" />
+                          <Eye className="h-3.5 w-3.5" aria-hidden="true" />
                           <span>Intip Kalimat Cloze</span>
                         </button>
                       </div>
                     ) : (
-                      /* Default Cloze Sentence Front */
                       <div className="space-y-6">
                         <p
                           lang="en"
@@ -724,7 +724,7 @@ export function ReviewSession({
                             seg.type === 'cloze' ? (
                               <span
                                 key={idx}
-                                className="mx-1 inline-block rounded-xl px-4 py-0.5 align-baseline font-sans text-lg sm:text-xl font-semibold tracking-widest"
+                                className="mx-1 inline-block rounded-xl px-4 py-0.5 align-baseline font-sans text-lg sm:text-xl font-semibold tracking-wider"
                                 style={{
                                   backgroundColor: 'var(--accent-soft)',
                                   color: 'var(--accent-text)',
@@ -754,27 +754,27 @@ export function ReviewSession({
                       </div>
                     )}
 
-                    {/* Optional Toggleable Indonesian Hint Row */}
                     <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
                       <button
                         type="button"
+                        aria-pressed={showIndonesianHint}
                         onClick={onToggleHint}
-                        className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
+                        className="inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
                         style={{
                           color: showIndonesianHint ? 'var(--accent-text)' : 'var(--text-muted)',
                           border: '1px solid var(--border-subtle)',
                         }}
                       >
                         {showIndonesianHint ? (
-                          <Eye className="h-3.5 w-3.5" />
+                          <Eye className="h-3.5 w-3.5" aria-hidden="true" />
                         ) : (
-                          <EyeOff className="h-3.5 w-3.5" />
+                          <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
                         )}
                         <span>
                           {showIndonesianHint ? 'Petunjuk ID: Aktif' : 'Tampilkan Petunjuk ID'}
                         </span>
                         <kbd
-                          className="hidden md:inline-block rounded px-1 py-0.5 text-[10px] font-mono-code"
+                          className="hidden md:inline-block rounded px-1 py-0.5 text-[11px] font-mono-code"
                           style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)' }}
                         >
                           H
@@ -785,16 +785,16 @@ export function ReviewSession({
                         <button
                           type="button"
                           onClick={() => speakText(parsedCloze.cleanSentence)}
-                          className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
+                          className="inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
                           style={{
                             color: 'var(--text-secondary)',
                             border: '1px solid var(--border-subtle)',
                           }}
                         >
-                          <Volume2 className="h-3.5 w-3.5" />
+                          <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
                           <span>Dengar Audio</span>
                           <kbd
-                            className="hidden md:inline-block rounded px-1 py-0.5 text-[10px] font-mono-code"
+                            className="hidden md:inline-block rounded px-1 py-0.5 text-[11px] font-mono-code"
                             style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-muted)' }}
                           >
                             R
@@ -805,13 +805,13 @@ export function ReviewSession({
 
                     {showIndonesianHint && (
                       <div
-                        className="rounded-2xl px-4 py-3 text-sm animate-card-reveal"
+                        className="rounded-xl px-4 py-3 text-sm animate-card-reveal"
                         style={{
                           backgroundColor: 'var(--bg-subtle)',
                           color: 'var(--text-secondary)',
                         }}
                       >
-                        <span className="text-xs font-semibold uppercase tracking-wide mr-2" style={{ color: 'var(--text-muted)' }}>
+                        <span className="text-xs font-semibold mr-2" style={{ color: 'var(--text-muted)' }}>
                           Petunjuk:
                         </span>
                         <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
@@ -821,9 +821,7 @@ export function ReviewSession({
                     )}
                   </div>
                 ) : (
-                  /* BACK FACE — Full Context, IPA, EN Definition, ID Meaning, Notes & Audio */
                   <div className="pt-6 space-y-6">
-                    {/* Highlighted Target Phrase + IPA + Audio Controls */}
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <h2
@@ -843,12 +841,11 @@ export function ReviewSession({
                         )}
                       </div>
 
-                      {/* Audio Playback Bar */}
                       <div className="flex flex-wrap items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => speakText(parsedCloze.cleanSentence)}
-                          className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all active:scale-95"
+                          className="inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-[transform,opacity] enabled:active:scale-[0.96]"
                           style={{
                             backgroundColor: 'var(--accent-solid)',
                             color: 'var(--text-on-accent)',
@@ -856,20 +853,20 @@ export function ReviewSession({
                           aria-label="Putar audio kalimat lengkap"
                         >
                           {isLoadingAudio ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
                           ) : (
-                            <Volume2 className="h-3.5 w-3.5" />
+                            <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
                           )}
                           <span>
                             {isLoadingAudio
-                              ? 'Memuat…'
+                              ? 'Memuat...'
                               : isSpeaking
-                                ? 'Memutar…'
+                                ? 'Memutar...'
                                 : 'Putar Kalimat'}
                           </span>
                           <kbd
-                            className="hidden md:inline-block rounded px-1 py-0.5 text-[10px] font-mono-code opacity-80"
-                            style={{ backgroundColor: 'oklch(0 0 0 / 0.16)' }}
+                            className="hidden md:inline-block rounded px-1 py-0.5 text-[11px] font-mono-code"
+                            style={{ backgroundColor: 'oklch(0 0 0 / 0.18)' }}
                           >
                             R
                           </kbd>
@@ -878,7 +875,7 @@ export function ReviewSession({
                         <button
                           type="button"
                           onClick={() => speakText(currentCard.phrase)}
-                          className="rounded-xl px-2.5 py-2 text-xs font-semibold transition-colors hover:bg-[var(--bg-hover)]"
+                          className="min-h-11 sm:min-h-9 rounded-xl px-2.5 py-2 text-xs font-semibold transition-colors hover:bg-[var(--bg-hover)]"
                           style={{
                             backgroundColor: 'var(--bg-subtle)',
                             color: 'var(--text-primary)',
@@ -891,7 +888,7 @@ export function ReviewSession({
                         <button
                           type="button"
                           onClick={() => onChangeAccent(accent === 'en-GB' ? 'en-US' : 'en-GB')}
-                          className="rounded-xl px-2.5 py-2 text-xs font-semibold transition-colors hover:bg-[var(--bg-hover)]"
+                          className="min-h-11 sm:min-h-9 rounded-xl px-2.5 py-2 text-xs font-semibold transition-colors hover:bg-[var(--bg-hover)]"
                           style={{
                             backgroundColor: 'var(--bg-subtle)',
                             color: 'var(--text-secondary)',
@@ -904,7 +901,7 @@ export function ReviewSession({
                         <button
                           type="button"
                           onClick={() => onChangeSpeechRate(speechRate === 1.0 ? 0.8 : 1.0)}
-                          className="rounded-xl px-2.5 py-2 text-xs font-semibold tabular-nums transition-colors hover:bg-[var(--bg-hover)]"
+                          className="min-h-11 sm:min-h-9 rounded-xl px-2.5 py-2 text-xs font-semibold tabular-nums transition-colors hover:bg-[var(--bg-hover)]"
                           style={{
                             backgroundColor: 'var(--bg-subtle)',
                             color: 'var(--text-secondary)',
@@ -916,7 +913,6 @@ export function ReviewSession({
                       </div>
                     </div>
 
-                    {/* Complete Sentence with Target Highlighted */}
                     <p
                       lang="en"
                       className="font-serif-study text-xl sm:text-2xl leading-[1.55] text-pretty"
@@ -939,14 +935,13 @@ export function ReviewSession({
                       )}
                     </p>
 
-                    {/* Structured Meaning & Usage Notes */}
                     <div
-                      className="grid grid-cols-1 gap-3 sm:grid-cols-2 rounded-2xl p-4"
+                      className="grid grid-cols-1 gap-3 sm:grid-cols-2 rounded-xl p-4"
                       style={{ backgroundColor: 'var(--bg-subtle)' }}
                     >
                       <div>
                         <div
-                          className="text-[11px] font-semibold uppercase tracking-[0.05em]"
+                          className="text-xs font-semibold"
                           style={{ color: 'var(--text-muted)' }}
                         >
                           Definisi (English)
@@ -957,10 +952,10 @@ export function ReviewSession({
                       </div>
                       <div>
                         <div
-                          className="text-[11px] font-semibold uppercase tracking-[0.05em]"
+                          className="text-xs font-semibold"
                           style={{ color: 'var(--text-muted)' }}
                         >
-                          Arti Ringkas (ID)
+                          Arti ringkas (ID)
                         </div>
                         <p className="mt-1 text-sm font-semibold leading-relaxed text-pretty">
                           {currentCard.translationId}
@@ -970,7 +965,7 @@ export function ReviewSession({
 
                     {currentCard.notes && (
                       <div
-                        className="rounded-2xl px-4 py-3 text-sm leading-relaxed text-pretty"
+                        className="rounded-xl px-4 py-3 text-sm leading-relaxed text-pretty"
                         style={{
                           border: '1px solid var(--border-subtle)',
                           color: 'var(--text-secondary)',
@@ -990,18 +985,16 @@ export function ReviewSession({
               </article>
             </div>
 
-            {/* Bottom Action Zone (Thumb-Friendly + Desktop Shortcuts) */}
             <div className="mt-6 pt-2 pb-2">
               {!isFlipped ? (
                 <div className="space-y-2.5">
                   <button
                     type="button"
                     onClick={handleFlip}
-                    className="flex w-full items-center justify-center gap-2.5 rounded-2xl px-6 py-4 text-base font-semibold transition-all active:scale-[0.99] hover:opacity-95"
+                    className="flex min-h-12 w-full items-center justify-center gap-2.5 rounded-xl px-6 py-4 text-base font-semibold transition-[transform,opacity] enabled:active:scale-[0.96] hover:opacity-95"
                     style={{
                       backgroundColor: 'var(--accent-solid)',
                       color: 'var(--text-on-accent)',
-                      boxShadow: '0 6px 20px -6px oklch(0.415 0.084 174 / 0.45)',
                     }}
                   >
                     <span>Lihat Jawaban</span>
@@ -1032,7 +1025,7 @@ export function ReviewSession({
                           key={option.key}
                           type="button"
                           onClick={() => handleRate(option.key)}
-                          className="group relative flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-3.5 transition-all active:scale-[0.97]"
+                          className="group relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-3 py-3.5 transition-[transform,opacity] enabled:active:scale-[0.96]"
                           style={{
                             backgroundColor: palette.bg,
                             border: `1.5px solid ${palette.border}`,
@@ -1044,13 +1037,13 @@ export function ReviewSession({
                               {option.label}
                             </span>
                             <kbd
-                              className="hidden md:inline-block rounded px-1.5 py-0.5 text-[10px] font-mono-code opacity-80"
+                              className="hidden md:inline-block rounded px-1.5 py-0.5 text-[11px] font-mono-code"
                               style={{ backgroundColor: 'oklch(0 0 0 / 0.08)' }}
                             >
                               {option.shortcut}
                             </kbd>
                           </div>
-                          <span className="text-xs font-semibold tabular-nums opacity-85">
+                          <span className="text-xs font-semibold tabular-nums">
                             {option.intervalLabel}
                           </span>
                         </button>
@@ -1062,9 +1055,8 @@ export function ReviewSession({
             </div>
           </>
         ) : (
-          /* Session Completion View */
           <div className="flex flex-1 items-center justify-center py-8">
-            <div className="paper-card-elevated w-full max-w-lg rounded-[28px] p-7 sm:p-9 text-center space-y-6 animate-card-reveal">
+            <div className="paper-card-elevated w-full max-w-lg rounded-[24px] p-6 sm:p-8 text-center space-y-6 animate-card-reveal">
               <div
                 className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl"
                 style={{
@@ -1072,7 +1064,7 @@ export function ReviewSession({
                   color: 'var(--accent-text)',
                 }}
               >
-                <CheckCircle2 className="h-8 w-8" />
+                <CheckCircle2 className="h-8 w-8" aria-hidden="true" />
               </div>
 
               <div className="space-y-2">
@@ -1080,11 +1072,10 @@ export function ReviewSession({
                   className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
                   style={{ backgroundColor: 'var(--sun-soft)', color: 'var(--sun-text)' }}
                 >
-                  <Sparkles className="h-3.5 w-3.5" />
                   Sesi Pagi Tuntas
                 </span>
                 <h1 className="font-serif-study text-3xl font-medium">
-                  Kerja bagus pagi ini!
+                  Sesi pagi selesai
                 </h1>
                 <p className="text-sm text-pretty" style={{ color: 'var(--text-secondary)' }}>
                   Jadwal pengulangan berikutnya sudah otomatis dihitung agar Anda mengulang tepat sebelum lupa.
@@ -1092,7 +1083,7 @@ export function ReviewSession({
               </div>
 
               <div
-                className="grid grid-cols-3 gap-3 rounded-2xl p-4"
+                className="grid grid-cols-3 gap-3 rounded-xl p-4"
                 style={{ backgroundColor: 'var(--bg-subtle)' }}
               >
                 <div>
@@ -1103,7 +1094,7 @@ export function ReviewSession({
                 </div>
                 <div>
                   <div className="text-2xl font-bold tabular-nums">
-                    {sessionReviewed > 0 ? `${Math.round((sessionRecalled / sessionReviewed) * 100)}%` : '—'}
+                    {sessionReviewed > 0 ? `${Math.round((sessionRecalled / sessionReviewed) * 100)}%` : '-'}
                   </div>
                   <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
                     Terjawab baik
@@ -1111,7 +1102,7 @@ export function ReviewSession({
                 </div>
                 <div>
                   <div className="flex items-center justify-center gap-1 text-2xl font-bold tabular-nums" style={{ color: 'var(--sun-text)' }}>
-                    <Flame className="h-5 w-5" />
+                    <Flame className="h-5 w-5" aria-hidden="true" />
                     <span>{streak}</span>
                   </div>
                   <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
@@ -1125,20 +1116,20 @@ export function ReviewSession({
                   <button
                     type="button"
                     onClick={handleAddExtraInSession}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-2xl px-5 py-3.5 text-sm font-semibold transition-all hover:opacity-95"
+                    className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold transition-[transform,opacity] enabled:active:scale-[0.96] hover:opacity-95"
                     style={{
                       backgroundColor: 'var(--accent-solid)',
                       color: 'var(--text-on-accent)',
                     }}
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-4 w-4" aria-hidden="true" />
                     <span>Tambah 5 Kartu Ekstra</span>
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={onExit}
-                  className="flex flex-1 items-center justify-center rounded-2xl px-5 py-3.5 text-sm font-semibold transition-colors hover:bg-[var(--bg-hover)]"
+                  className="flex min-h-11 flex-1 items-center justify-center rounded-xl px-5 py-3.5 text-sm font-semibold transition-colors hover:bg-[var(--bg-hover)]"
                   style={{
                     backgroundColor: 'var(--bg-subtle)',
                     color: 'var(--text-primary)',

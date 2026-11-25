@@ -53,8 +53,8 @@ export default function App() {
   });
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const toastTimerRef = useRef<number | null>(null);
+  const firstThemeSyncRef = useRef(true);
 
-  // Detect whether local proxy server has ELEVENLABS_API_KEY configured in .env.local
   useEffect(() => {
     let active = true;
     void checkServerTtsStatus().then((status) => {
@@ -63,25 +63,29 @@ export default function App() {
     });
     return () => {
       active = false;
+      if (toastTimerRef.current !== null) {
+        window.clearTimeout(toastTimerRef.current);
+      }
     };
   }, []);
 
   const notify = useCallback((tone: ToastMessage['tone'], text: string) => {
     if (toastTimerRef.current !== null) {
       window.clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = null;
     }
     setToast({ id: String(Date.now()), tone, text });
-    toastTimerRef.current = window.setTimeout(() => {
-      setToast(null);
-    }, 3600);
+    if (tone !== 'error') {
+      toastTimerRef.current = window.setTimeout(() => {
+        setToast(null);
+      }, 3600);
+    }
   }, []);
 
-  // Persist every state change atomically to structured localStorage
   useEffect(() => {
     saveAppState(state);
   }, [state]);
 
-  // Apply light/dark theme class cleanly on <html>
   const [systemDark, setSystemDark] = useState<boolean>(() =>
     typeof window !== 'undefined' && window.matchMedia
       ? window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -101,11 +105,31 @@ export default function App() {
 
   useEffect(() => {
     const root = document.documentElement;
+    if (!firstThemeSyncRef.current) {
+      root.classList.add('theme-switching');
+    }
+    firstThemeSyncRef.current = false;
     if (isDark) root.classList.add('dark');
     else root.classList.remove('dark');
+    void getComputedStyle(root).opacity;
+    const raf = window.requestAnimationFrame(() => {
+      root.classList.remove('theme-switching');
+    });
+    return () => window.cancelAnimationFrame(raf);
   }, [isDark]);
 
-  // Combine starter decks + custom decks (include personal deck whenever custom cards exist in it)
+  useEffect(() => {
+    const tabTitles: Record<NavTab, string> = {
+      today: 'Hari Ini',
+      decks: 'Deck',
+      add: 'Tambah & Import',
+      progress: 'Progres',
+    };
+    document.title = inReviewSession
+      ? 'Sesi Review · PagiKata'
+      : `${tabTitles[activeTab]} · PagiKata`;
+  }, [activeTab, inReviewSession]);
+
   const allDecks: DeckDefinition[] = useMemo(() => {
     const hasPersonalCards = state.customCards.some((c) => c.deckId === DEFAULT_CUSTOM_DECK_ID);
     const hasPersonalDeck = state.customDecks.some((d) => d.id === DEFAULT_CUSTOM_DECK_ID);
@@ -187,7 +211,7 @@ export default function App() {
 
     notify(
       'success',
-      `Fase ${phase.monthsLabel} (${phase.cefrTarget}) aktif — deck rekomendasi otomatis dipilih.`
+      `Fase ${phase.monthsLabel} (${phase.cefrTarget}) aktif. Deck rekomendasi otomatis dipilih.`
     );
   };
 
@@ -345,8 +369,21 @@ export default function App() {
       customDecks: prev.customDecks,
       customCards: prev.customCards,
     }));
-    notify('info', 'Progres review berhasil direset. Kartu kustom Anda tetap aman.');
+    notify('info', 'Progres review direset. Kartu kustom Anda tetap disimpan.');
   };
+
+  const skipLink = (
+    <a
+      href="#main-content"
+      className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-xl focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold"
+      style={{
+        backgroundColor: 'var(--accent-solid)',
+        color: 'var(--text-on-accent)',
+      }}
+    >
+      Langsung ke konten utama
+    </a>
+  );
 
   const voiceModal = (
     <VoiceSettingsModal
@@ -365,6 +402,7 @@ export default function App() {
   if (inReviewSession) {
     return (
       <>
+        {skipLink}
         <ReviewSession
           initialQueue={sessionInitialQueue}
           state={state}
@@ -391,6 +429,7 @@ export default function App() {
 
   return (
     <div className="min-h-dvh flex flex-col">
+      {skipLink}
       <AppHeader
         activeTab={activeTab}
         onSelectTab={setActiveTab}
@@ -402,7 +441,11 @@ export default function App() {
         onOpenVoiceSettings={() => setIsVoiceModalOpen(true)}
       />
 
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 pt-6 pb-24 sm:px-6 md:pt-8 md:pb-12">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="mx-auto w-full max-w-4xl flex-1 px-4 pt-6 pb-24 sm:px-6 md:pt-8 md:pb-12"
+      >
         {activeTab === 'today' && (
           <TodayView
             queueInfo={queueInfo}

@@ -63,7 +63,7 @@ export const LEARNING_PHASES: LearningPhaseDefinition[] = [
 export const STARTER_DECKS: DeckDefinition[] = [
   {
     id: STARTER_DECK_IDS.FONDASI,
-    title: 'Oxford 3000 — Fondasi',
+    title: 'Oxford 3000: Fondasi',
     subtitle: 'A2 → B1 • Komunikasi Harian',
     description:
       'Frasa, collocation, dan kosakata esensial untuk percakapan sehari-hari, perjalanan, serta rutinitas kerja dasar.',
@@ -74,7 +74,7 @@ export const STARTER_DECKS: DeckDefinition[] = [
   },
   {
     id: STARTER_DECK_IDS.MENENGAH,
-    title: 'Oxford 3000 — Menengah',
+    title: 'Oxford 3000: Menengah',
     subtitle: 'B1 → B2 • Kerja & Diskusi',
     description:
       'Phrasal verbs produktif, collocation dunia kerja, cara menyampaikan opini, dan kosakata diskusi tingkat menengah.',
@@ -85,7 +85,7 @@ export const STARTER_DECKS: DeckDefinition[] = [
   },
   {
     id: STARTER_DECK_IDS.BBC_IDIOMS,
-    title: 'BBC 6 Minute English — Idioms',
+    title: 'BBC 6 Minute English: Idioms',
     subtitle: 'B1 → B2 • Ungkapan Natural',
     description:
       'Idiom dan ekspresi percakapan autentik bergaya BBC Learning English agar telinga akrab dengan bahasa Inggris alami.',
@@ -96,7 +96,7 @@ export const STARTER_DECKS: DeckDefinition[] = [
   },
   {
     id: STARTER_DECK_IDS.OXFORD_C1,
-    title: 'Oxford 5000 — C1 Precision',
+    title: 'Oxford 5000: C1 Precision',
     subtitle: 'B2 → C1 • Nuansa & Argumen',
     description:
       'Kosakata bernuansa tinggi, ungkapan akademis, dan collocation presisi untuk menulis dan berargumen setara C1.',

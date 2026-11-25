@@ -475,7 +475,6 @@ export function calculateProgressStats(params: {
   const calendarLength = params.calendarLength ?? 28;
   const todayKey = getLocalDateKey(now);
 
-  // Mastery counts
   const masteryCounts: Record<MasteryBucket, number> = {
     new: 0,
     learning: 0,
@@ -513,14 +512,13 @@ export function calculateProgressStats(params: {
     };
   });
 
-  // Streak calculations
   const activeDatesSet = new Set(
     Object.values(params.dailyActivity)
       .filter((day) => day.reviews > 0)
       .map((day) => day.dateKey)
   );
 
-  // Current streak: counts back from today if reviewed today, or from yesterday if still active
+  // Count backwards from today when reviewed today, or from yesterday while streak remains active
   let currentStreak = 0;
   let cursorOffset = activeDatesSet.has(todayKey) ? 0 : -1;
   while (activeDatesSet.has(getLocalDateKey(shiftDateKey(now, cursorOffset)))) {
@@ -528,7 +526,6 @@ export function calculateProgressStats(params: {
     cursorOffset -= 1;
   }
 
-  // Longest streak across all recorded active dates
   const sortedActiveDates = [...activeDatesSet].sort();
   let longestStreak = 0;
   let running = 0;
@@ -546,7 +543,6 @@ export function calculateProgressStats(params: {
     prevTime = utcDay;
   }
 
-  // Totals & retention
   let totalReviews = 0;
   let recalledCount = 0;
   for (const day of Object.values(params.dailyActivity)) {
@@ -556,7 +552,6 @@ export function calculateProgressStats(params: {
   const retentionRate = totalReviews > 0 ? Math.round((recalledCount / totalReviews) * 100) : null;
   const reviewsToday = params.dailyActivity[todayKey]?.reviews ?? 0;
 
-  // 28-day activity calendar
   const calendarDays: ActivityDayCell[] = [];
   for (let offset = -(calendarLength - 1); offset <= 0; offset += 1) {
     const d = shiftDateKey(now, offset);

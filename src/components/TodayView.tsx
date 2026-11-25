@@ -2,7 +2,7 @@ import {
   Play,
   Headphones,
   FileText,
-  Sparkles,
+  BookOpen,
   Clock,
   CheckCircle2,
   Flame,
@@ -32,21 +32,12 @@ interface TodayViewProps {
   onGoToDecks: () => void;
 }
 
-function getMorningGreeting(): { greeting: string; dateLabel: string } {
-  const now = new Date();
-  const hour = now.getHours();
-  let greeting = 'Selamat Pagi';
-  if (hour >= 11 && hour < 15) greeting = 'Selamat Siang';
-  else if (hour >= 15 && hour < 19) greeting = 'Selamat Sore';
-  else if (hour >= 19 || hour < 4) greeting = 'Selamat Malam';
-
-  const dateLabel = new Intl.DateTimeFormat('id-ID', {
+function formatTodayDate(): string {
+  return new Intl.DateTimeFormat('id-ID', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
-  }).format(now);
-
-  return { greeting, dateLabel };
+  }).format(new Date());
 }
 
 export function TodayView({
@@ -62,7 +53,7 @@ export function TodayView({
   onChangeStudyMode,
   onGoToDecks,
 }: TodayViewProps) {
-  const { greeting, dateLabel } = getMorningGreeting();
+  const dateLabel = formatTodayDate();
   const currentPhase = LEARNING_PHASES.find((p) => p.id === phaseId) ?? LEARNING_PHASES[0];
 
   const totalPlannedToday = queueInfo.reviewsToday + queueInfo.totalCount;
@@ -70,40 +61,36 @@ export function TodayView({
     totalPlannedToday === 0
       ? 100
       : Math.min(100, Math.round((queueInfo.reviewsToday / totalPlannedToday) * 100));
+  const progressRatio =
+    queueInfo.reviewsToday > 0 ? Math.max(0.06, completionPct / 100) : 0;
 
   const hasCardsToStudy = queueInfo.totalCount > 0;
   const noActiveDecks = activeDecks.length === 0;
 
   return (
     <div className="space-y-6 pb-8 animate-card-reveal">
-      {/* Calm Header Greeting */}
       <section className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
             {dateLabel}
           </p>
           <h1 className="mt-1 font-serif-study text-3xl sm:text-[34px] font-medium tracking-[-0.015em] leading-[1.15]">
-            {greeting}, siap 10 menit {greeting === 'Selamat Pagi' ? 'pagi' : 'hari'} ini?
+            Sesi Review Hari Ini
           </h1>
         </div>
-        <div className="mt-2 sm:mt-0 inline-flex items-center gap-2 text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
-          <span
-            className="inline-block h-2 w-2 rounded-full"
-            style={{ backgroundColor: 'var(--accent-solid)' }}
-          />
-          <span>{currentPhase.curriculumLabel} ({currentPhase.cefrTarget})</span>
+        <div className="mt-2 sm:mt-0 text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+          {currentPhase.curriculumLabel} ({currentPhase.cefrTarget})
         </div>
       </section>
 
-      {/* HERO CARD — Zero-Friction Morning Flow */}
-      <section className="paper-card-elevated rounded-[24px] p-6 sm:p-8">
+      <section className="paper-card-elevated rounded-[24px] p-5 sm:p-7">
         {noActiveDecks ? (
           <div className="py-4 text-center space-y-4">
             <div
               className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl"
               style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-secondary)' }}
             >
-              <Layers className="h-6 w-6" />
+              <Layers className="h-6 w-6" aria-hidden="true" />
             </div>
             <div className="space-y-1">
               <h2 className="text-xl font-semibold">Belum ada deck yang aktif</h2>
@@ -114,19 +101,18 @@ export function TodayView({
             <button
               type="button"
               onClick={onGoToDecks}
-              className="inline-flex items-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-semibold transition-colors"
+              className="inline-flex min-h-11 items-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-semibold transition-colors"
               style={{
                 backgroundColor: 'var(--accent-solid)',
                 color: 'var(--text-on-accent)',
               }}
             >
               <span>Buka Daftar Deck</span>
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         ) : hasCardsToStudy ? (
           <div className="space-y-6">
-            {/* Session Summary Row */}
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="space-y-2">
                 <span
@@ -136,7 +122,7 @@ export function TodayView({
                     color: 'var(--accent-text)',
                   }}
                 >
-                  <Sparkles className="h-3.5 w-3.5" />
+                  <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
                   Sesi Review Pagi
                 </span>
                 <div className="flex items-baseline gap-2.5">
@@ -157,13 +143,12 @@ export function TodayView({
                   </span>
                   <span aria-hidden="true" style={{ color: 'var(--border-strong)' }}>•</span>
                   <span className="inline-flex items-center gap-1 tabular-nums">
-                    <Clock className="h-3.5 w-3.5" />
+                    <Clock className="h-3.5 w-3.5" aria-hidden="true" />
                     ~{queueInfo.estimatedMinutes} menit
                   </span>
                 </div>
               </div>
 
-              {/* Study Mode Quick Toggle */}
               <div
                 className="inline-flex self-start rounded-2xl p-1"
                 style={{
@@ -176,45 +161,45 @@ export function TodayView({
                 <button
                   type="button"
                   onClick={() => onChangeStudyMode('cloze')}
-                  className="flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all"
+                  aria-pressed={studyMode === 'cloze'}
+                  className="flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-colors"
                   style={{
                     backgroundColor: studyMode === 'cloze' ? 'var(--bg-surface)' : 'transparent',
                     color: studyMode === 'cloze' ? 'var(--text-primary)' : 'var(--text-secondary)',
                     boxShadow: studyMode === 'cloze' ? '0 1px 3px oklch(0 0 0 / 0.08)' : 'none',
                   }}
                 >
-                  <FileText className="h-3.5 w-3.5" />
+                  <FileText className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>Cloze</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => onChangeStudyMode('listening')}
-                  className="flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all"
+                  aria-pressed={studyMode === 'listening'}
+                  className="flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-colors"
                   style={{
                     backgroundColor: studyMode === 'listening' ? 'var(--bg-surface)' : 'transparent',
                     color: studyMode === 'listening' ? 'var(--text-primary)' : 'var(--text-secondary)',
                     boxShadow: studyMode === 'listening' ? '0 1px 3px oklch(0 0 0 / 0.08)' : 'none',
                   }}
                 >
-                  <Headphones className="h-3.5 w-3.5" />
+                  <Headphones className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>Listening First</span>
                 </button>
               </div>
             </div>
 
-            {/* Single Prominent Primary CTA */}
             <div className="space-y-3">
               <button
                 type="button"
                 onClick={onStartReview}
-                className="group flex w-full items-center justify-center gap-2.5 rounded-2xl px-6 py-4 text-base font-semibold transition-all active:scale-[0.99] hover:opacity-95"
+                className="group flex min-h-12 w-full items-center justify-center gap-2.5 rounded-xl px-6 py-4 text-base font-semibold transition-[transform,opacity] enabled:active:scale-[0.96] hover:opacity-95"
                 style={{
                   backgroundColor: 'var(--accent-solid)',
                   color: 'var(--text-on-accent)',
-                  boxShadow: '0 6px 20px -6px oklch(0.415 0.084 174 / 0.45)',
                 }}
               >
-                <Play className="h-5 w-5 fill-current translate-x-[1px]" />
+                <Play className="h-5 w-5 fill-current translate-x-[1px]" aria-hidden="true" />
                 <span>
                   {queueInfo.reviewsToday > 0 ? 'Lanjutkan Review' : 'Mulai Review'}
                 </span>
@@ -223,13 +208,12 @@ export function TodayView({
               <p className="text-center text-xs" style={{ color: 'var(--text-muted)' }}>
                 {studyMode === 'listening'
                   ? 'Mode Listening First: audio aksen British (en-GB) dibacakan dulu untuk melatih telinga BBC.'
-                  : 'Mode Cloze: ingat frasa dari konteks kalimat utuh — tanpa setting teknis yang rumit.'}
+                  : 'Mode Cloze: ingat frasa dari konteks kalimat utuh tanpa setting teknis yang rumit.'}
               </p>
             </div>
 
-            {/* Calm Daily Progress Strip */}
             <div
-              className="rounded-2xl p-4"
+              className="rounded-xl p-4"
               style={{ backgroundColor: 'var(--bg-subtle)' }}
             >
               <div className="flex items-center justify-between text-xs font-medium">
@@ -241,13 +225,18 @@ export function TodayView({
                 </span>
               </div>
               <div
+                role="progressbar"
+                aria-label="Progres review hari ini"
+                aria-valuenow={completionPct}
+                aria-valuemin={0}
+                aria-valuemax={100}
                 className="mt-2 h-2 w-full overflow-hidden rounded-full"
                 style={{ backgroundColor: 'var(--border-subtle)' }}
               >
                 <div
-                  className="h-full rounded-full transition-all duration-500"
+                  className="h-full w-full origin-left rounded-full transition-transform duration-300"
                   style={{
-                    width: `${Math.max(completionPct, queueInfo.reviewsToday > 0 ? 6 : 0)}%`,
+                    transform: `scaleX(${progressRatio})`,
                     backgroundColor: 'var(--accent-solid)',
                   }}
                 />
@@ -255,7 +244,6 @@ export function TodayView({
             </div>
           </div>
         ) : (
-          /* Completed Morning Session Celebration */
           <div className="space-y-5 py-2 text-center">
             <div
               className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl"
@@ -264,18 +252,18 @@ export function TodayView({
                 color: 'var(--accent-text)',
               }}
             >
-              <CheckCircle2 className="h-7 w-7" />
+              <CheckCircle2 className="h-7 w-7" aria-hidden="true" />
             </div>
             <div className="space-y-1.5">
               <h2 className="font-serif-study text-2xl sm:text-3xl font-medium">
-                Sesi pagi Anda selesai!
+                Sesi pagi Anda selesai
               </h2>
               <p className="mx-auto max-w-md text-sm text-pretty" style={{ color: 'var(--text-secondary)' }}>
-                Hebat — Anda sudah menyelesaikan{' '}
+                Anda sudah menyelesaikan{' '}
                 <strong className="tabular-nums" style={{ color: 'var(--text-primary)' }}>
                   {queueInfo.reviewsToday} review
                 </strong>{' '}
-                hari ini. Otak Anda kini sedang menguatkan memori secara alami sampai besok pagi.
+                hari ini. Otak Anda sedang menguatkan memori sampai besok pagi.
               </p>
             </div>
 
@@ -284,24 +272,24 @@ export function TodayView({
                 <button
                   type="button"
                   onClick={onAddExtraCards}
-                  className="inline-flex items-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-semibold transition-all active:scale-[0.99] hover:opacity-95"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold transition-[transform,opacity] enabled:active:scale-[0.96] hover:opacity-95"
                   style={{
                     backgroundColor: 'var(--accent-solid)',
                     color: 'var(--text-on-accent)',
                   }}
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-4 w-4" aria-hidden="true" />
                   <span>Tambah 5 Kartu Ekstra</span>
                 </button>
               )}
               <div
-                className="inline-flex items-center gap-1.5 rounded-2xl px-4 py-3 text-sm font-medium tabular-nums"
+                className="inline-flex items-center gap-1.5 rounded-xl px-4 py-3 text-sm font-medium tabular-nums"
                 style={{
                   backgroundColor: 'var(--sun-soft)',
                   color: 'var(--sun-text)',
                 }}
               >
-                <Flame className="h-4 w-4" />
+                <Flame className="h-4 w-4" aria-hidden="true" />
                 <span>Streak terjaga: {streak} hari</span>
               </div>
             </div>
@@ -309,7 +297,6 @@ export function TodayView({
         )}
       </section>
 
-      {/* Learning Phase Selector (12-Month BBC A2 -> C1 Plan) */}
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -317,7 +304,7 @@ export function TodayView({
               Fase Belajar 12 Bulan Anda
             </h2>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-              Pilih fase saat ini — deck siap pakai otomatis menyesuaikan kurikulum BBC Learning English.
+              Pilih fase saat ini. Deck siap pakai otomatis menyesuaikan kurikulum BBC Learning English.
             </p>
           </div>
         </div>
@@ -329,8 +316,9 @@ export function TodayView({
               <button
                 key={phase.id}
                 type="button"
+                aria-pressed={isSelected}
                 onClick={() => onChangePhase(phase.id)}
-                className="group relative rounded-2xl p-4 text-left transition-all"
+                className="group relative rounded-2xl p-4 text-left transition-colors"
                 style={{
                   backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--bg-surface)',
                   border: isSelected
@@ -369,8 +357,7 @@ export function TodayView({
         </div>
       </section>
 
-      {/* Compact Active Decks Overview */}
-      <section className="paper-card rounded-2xl p-4 sm:p-5">
+      <section className="paper-card rounded-[20px] p-4 sm:p-5">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-semibold">Deck Aktif Hari Ini</h3>
@@ -383,11 +370,11 @@ export function TodayView({
           <button
             type="button"
             onClick={onGoToDecks}
-            className="inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
+            className="inline-flex min-h-11 sm:min-h-9 items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
             style={{ color: 'var(--accent-text)' }}
           >
             <span>Atur Deck</span>
-            <ChevronRight className="h-3.5 w-3.5" />
+            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
         </div>
 
@@ -404,7 +391,7 @@ export function TodayView({
               >
                 <span>{deck.title}</span>
                 <span
-                  className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
+                  className="rounded-md px-1.5 py-0.5 text-[11px] font-semibold"
                   style={{
                     backgroundColor: 'var(--bg-surface)',
                     color: 'var(--text-muted)',

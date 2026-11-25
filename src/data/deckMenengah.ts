@@ -542,7 +542,7 @@ export const DECK_MENENGAH_CARDS: VocabCard[] = [
     translationId: 'membuat kemajuan',
     partOfSpeech: 'collocation',
     cefr: 'B1',
-    notes: 'Progress itu uncountable — pakai "make good/steady progress", bukan "make a progress".',
+    notes: 'Progress itu uncountable: pakai "make good/steady progress", bukan "make a progress".',
   },
   {
     id: 'ox3k-m-46',

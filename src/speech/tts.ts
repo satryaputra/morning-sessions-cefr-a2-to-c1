@@ -235,13 +235,11 @@ export async function speakEnglish(options: SpeakOptions): Promise<boolean> {
     text: cleanText,
   });
 
-  // 1. Instant cached playback (0 credits, ~0ms latency)
   const cachedBlob = await getCachedAudio(cacheKey);
   if (cachedBlob) {
     return playAudioBlob(cachedBlob, options);
   }
 
-  // 2. Fetch fresh studio audio via proxy
   const controller = new AbortController();
   activeAbortController = controller;
   options.onLoading?.(true);
@@ -275,7 +273,7 @@ export async function speakEnglish(options: SpeakOptions): Promise<boolean> {
     const reason =
       err instanceof ElevenLabsTtsError
         ? err.message
-        : 'Suara ElevenLabs tidak tersedia — otomatis beralih ke suara browser.';
+        : 'Suara ElevenLabs tidak tersedia, otomatis beralih ke suara browser.';
     options.onFallback?.(reason);
 
     return speakWithBrowser({
@@ -330,6 +328,6 @@ export async function prefetchElevenLabsAudio(params: {
     });
     await putCachedAudio(cacheKey, blob);
   } catch {
-    // Silent prefetch failure — main playback handles fallback gracefully
+    // Silent prefetch failure: main playback handles fallback gracefully
   }
 }

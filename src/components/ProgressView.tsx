@@ -61,13 +61,20 @@ export function ProgressView({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [pendingBackup, setPendingBackup] = useState<ParsedBackupResult | null>(null);
   const [confirmingReset, setConfirmingReset] = useState(false);
+  const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
+
+  const defaultDay =
+    stats.calendarDays.find((d) => d.isToday) ??
+    stats.calendarDays[stats.calendarDays.length - 1];
+  const selectedDay =
+    stats.calendarDays.find((d) => d.dateKey === selectedDateKey) ?? defaultDay;
 
   const handleExportBackup = () => {
     const now = new Date();
     const json = serializeBackup(state, now);
     const filename = `pagikata-backup-${getLocalDateKey(now)}.json`;
     triggerJsonDownload(filename, json);
-    onNotify('success', `Backup berhasil diunduh (${filename}).`);
+    onNotify('success', `Backup diunduh (${filename}).`);
   };
 
   const handleSelectBackupFile = (file: File | undefined) => {
@@ -94,7 +101,7 @@ export function ProgressView({
     onRestoreState(pendingBackup.payload.state);
     setPendingBackup(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
-    onNotify('success', 'Progres dan kartu dari backup JSON berhasil dipulihkan.');
+    onNotify('success', 'Progres dan kartu dari backup JSON dipulihkan.');
   };
 
   const heatColor = (intensity: 0 | 1 | 2 | 3 | 4): string => `var(--heat-${intensity})`;
@@ -110,11 +117,10 @@ export function ProgressView({
         </p>
       </section>
 
-      {/* Top 4 Motivating Metrics */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="paper-card rounded-2xl p-4 space-y-1.5">
           <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--sun-text)' }}>
-            <Flame className="h-4 w-4" />
+            <Flame className="h-4 w-4" aria-hidden="true" />
             <span>Streak Saat Ini</span>
           </div>
           <div className="text-2xl sm:text-3xl font-bold tabular-nums">
@@ -127,7 +133,7 @@ export function ProgressView({
 
         <div className="paper-card rounded-2xl p-4 space-y-1.5">
           <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
-            <Trophy className="h-4 w-4" />
+            <Trophy className="h-4 w-4" aria-hidden="true" />
             <span>Rekor Terpanjang</span>
           </div>
           <div className="text-2xl sm:text-3xl font-bold tabular-nums">
@@ -140,7 +146,7 @@ export function ProgressView({
 
         <div className="paper-card rounded-2xl p-4 space-y-1.5">
           <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--accent-text)' }}>
-            <CheckCircle2 className="h-4 w-4" />
+            <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
             <span>Total Review</span>
           </div>
           <div className="text-2xl sm:text-3xl font-bold tabular-nums">
@@ -150,22 +156,21 @@ export function ProgressView({
 
         <div className="paper-card rounded-2xl p-4 space-y-1.5">
           <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
-            <Target className="h-4 w-4" />
+            <Target className="h-4 w-4" aria-hidden="true" />
             <span>Tingkat Ingat</span>
           </div>
           <div className="text-2xl sm:text-3xl font-bold tabular-nums">
-            {stats.retentionRate !== null ? `${stats.retentionRate}%` : '—'}
+            {stats.retentionRate !== null ? `${stats.retentionRate}%` : '-'}
           </div>
         </div>
       </section>
 
-      {/* 28-Day Activity Calendar */}
       <section className="paper-card rounded-[24px] p-5 sm:p-6 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="text-base font-bold">Kalender Aktivitas 28 Hari</h2>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-              Setiap kotak merekam sesi review harian Anda dalam 4 minggu terakhir.
+              Pilih tanggal untuk melihat detail sesi review dalam 4 minggu terakhir.
             </p>
           </div>
           <div className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--text-muted)' }}>
@@ -173,6 +178,7 @@ export function ProgressView({
             {([0, 1, 2, 3, 4] as const).map((level) => (
               <span
                 key={level}
+                aria-hidden="true"
                 className="h-3 w-3 rounded-[4px]"
                 style={{ backgroundColor: heatColor(level) }}
               />
@@ -182,39 +188,61 @@ export function ProgressView({
         </div>
 
         <div className="grid grid-cols-7 gap-2">
-          {stats.calendarDays.map((day) => (
-            <div
-              key={day.dateKey}
-              title={`${day.label}: ${day.reviews} review (${day.newStudied} kartu baru)`}
-              className="flex flex-col items-center justify-center rounded-xl py-2.5 px-1 text-center transition-transform"
-              style={{
-                backgroundColor: heatColor(day.intensity),
-                color:
-                  day.intensity >= 3
-                    ? 'var(--text-on-accent)'
-                    : 'var(--text-primary)',
-                border: day.isToday
-                  ? '2px solid var(--accent-solid)'
-                  : '1px solid transparent',
-              }}
-            >
-              <span className="text-[10px] font-medium opacity-80 leading-none">
-                {day.shortDay}
-              </span>
-              <span className="mt-1 text-xs font-bold tabular-nums leading-none">
-                {day.reviews > 0 ? day.reviews : '·'}
-              </span>
-              <span className="mt-1 text-[9px] opacity-75 leading-none hidden sm:inline">
-                {day.label}
-              </span>
-            </div>
-          ))}
+          {stats.calendarDays.map((day) => {
+            const isSelected = selectedDay?.dateKey === day.dateKey;
+            return (
+              <button
+                key={day.dateKey}
+                type="button"
+                onClick={() => setSelectedDateKey(day.dateKey)}
+                aria-pressed={isSelected}
+                aria-label={`${day.label}: ${day.reviews} review, ${day.newStudied} kartu baru`}
+                className="flex min-h-11 flex-col items-center justify-center rounded-xl py-2 px-1 text-center transition-colors"
+                style={{
+                  backgroundColor: heatColor(day.intensity),
+                  color:
+                    day.intensity >= 3
+                      ? 'var(--text-on-accent)'
+                      : 'var(--text-primary)',
+                  border: day.isToday || isSelected
+                    ? '2px solid var(--accent-solid)'
+                    : '1px solid transparent',
+                }}
+              >
+                <span className="text-[11px] font-medium leading-none">
+                  {day.shortDay}
+                </span>
+                <span className="mt-1 text-xs font-bold tabular-nums leading-none">
+                  {day.reviews > 0 ? day.reviews : '·'}
+                </span>
+                <span className="mt-1 text-[11px] leading-none hidden sm:inline">
+                  {day.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
+
+        {selectedDay && (
+          <div
+            className="flex flex-wrap items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-xs"
+            style={{
+              backgroundColor: 'var(--bg-subtle)',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+              {selectedDay.label}
+              {selectedDay.isToday ? ' (Hari Ini)' : ''}
+            </span>
+            <span className="tabular-nums">
+              {selectedDay.reviews} review · {selectedDay.newStudied} kartu baru
+            </span>
+          </div>
+        )}
       </section>
 
-      {/* Mastery Breakdown + CEFR Breakdown */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        {/* Card Mastery Status */}
         <section className="paper-card rounded-[24px] p-5 sm:p-6 space-y-4">
           <div>
             <h2 className="text-base font-bold">Status Penguasaan Kartu</h2>
@@ -223,7 +251,6 @@ export function ProgressView({
             </p>
           </div>
 
-          {/* Stacked Bar */}
           <div
             className="flex h-3 w-full overflow-hidden rounded-full"
             style={{ backgroundColor: 'var(--bg-subtle)' }}
@@ -249,11 +276,12 @@ export function ProgressView({
             {(['new', 'learning', 'mastering', 'memorized'] as MasteryBucket[]).map((bucket) => (
               <div
                 key={bucket}
-                className="rounded-2xl p-3.5"
+                className="rounded-xl p-3.5"
                 style={{ backgroundColor: MASTERY_STYLES[bucket].soft }}
               >
                 <div className="flex items-center gap-2">
                   <span
+                    aria-hidden="true"
                     className="h-2.5 w-2.5 rounded-full"
                     style={{ backgroundColor: MASTERY_STYLES[bucket].bar }}
                   />
@@ -272,7 +300,6 @@ export function ProgressView({
           </div>
         </section>
 
-        {/* Progress per CEFR Level */}
         <section className="paper-card rounded-[24px] p-5 sm:p-6 space-y-4">
           <div>
             <h2 className="text-base font-bold">Progres per Level CEFR</h2>
@@ -302,20 +329,25 @@ export function ProgressView({
                   <span className="font-semibold tabular-nums">{item.percentStarted}%</span>
                 </div>
                 <div
+                  role="progressbar"
+                  aria-label={`Progres level ${item.level}`}
+                  aria-valuenow={item.percentStarted}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
                   className="relative h-2.5 w-full overflow-hidden rounded-full"
                   style={{ backgroundColor: 'var(--bg-subtle)' }}
                 >
                   <div
-                    className="absolute inset-y-0 left-0 rounded-full transition-all"
+                    className="absolute inset-0 origin-left rounded-full transition-transform duration-300"
                     style={{
-                      width: `${item.percentStarted}%`,
+                      transform: `scaleX(${item.percentStarted / 100})`,
                       backgroundColor: 'var(--accent-border)',
                     }}
                   />
                   <div
-                    className="absolute inset-y-0 left-0 rounded-full transition-all"
+                    className="absolute inset-0 origin-left rounded-full transition-transform duration-300"
                     style={{
-                      width: `${item.percentMastered}%`,
+                      transform: `scaleX(${item.percentMastered / 100})`,
                       backgroundColor: 'var(--accent-solid)',
                     }}
                   />
@@ -326,7 +358,6 @@ export function ProgressView({
         </section>
       </div>
 
-      {/* Backup JSON Export / Import */}
       <section className="paper-card rounded-[24px] p-5 sm:p-6 space-y-4">
         <div className="flex items-start gap-3">
           <div
@@ -336,7 +367,7 @@ export function ProgressView({
               color: 'var(--accent-text)',
             }}
           >
-            <ShieldCheck className="h-5 w-5" />
+            <ShieldCheck className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>
             <h2 className="text-base font-bold">Backup & Pindah Perangkat (JSON)</h2>
@@ -350,42 +381,43 @@ export function ProgressView({
           <button
             type="button"
             onClick={handleExportBackup}
-            className="inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all hover:opacity-95"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-opacity hover:opacity-95"
             style={{
               backgroundColor: 'var(--accent-solid)',
               color: 'var(--text-on-accent)',
             }}
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-4 w-4" aria-hidden="true" />
             <span>Export Backup JSON</span>
           </button>
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json,application/json"
-            id="backup-json-input"
-            className="hidden"
-            onChange={(e) => handleSelectBackupFile(e.target.files?.[0])}
-          />
-          <label
-            htmlFor="backup-json-input"
-            className="inline-flex cursor-pointer items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-[var(--bg-hover)]"
-            style={{
-              backgroundColor: 'var(--bg-subtle)',
-              border: '1px solid var(--border-strong)',
-              color: 'var(--text-primary)',
-            }}
-          >
-            <Upload className="h-4 w-4" />
-            <span>Import Backup JSON</span>
-          </label>
+          <div className="relative">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,application/json"
+              id="backup-json-input"
+              className="sr-only peer"
+              onChange={(e) => handleSelectBackupFile(e.target.files?.[0])}
+            />
+            <label
+              htmlFor="backup-json-input"
+              className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-[var(--bg-hover)] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--accent-solid)]"
+              style={{
+                backgroundColor: 'var(--bg-subtle)',
+                border: '1px solid var(--border-strong)',
+                color: 'var(--text-primary)',
+              }}
+            >
+              <Upload className="h-4 w-4" aria-hidden="true" />
+              <span>Import Backup JSON</span>
+            </label>
+          </div>
         </div>
 
-        {/* Backup Restore Confirmation Card */}
         {pendingBackup && (
           <div
-            className="rounded-2xl p-4 space-y-3 animate-card-reveal"
+            className="rounded-xl p-4 space-y-3 animate-card-reveal"
             style={{
               backgroundColor: 'var(--bg-subtle)',
               border: '1.5px solid var(--accent-solid)',
@@ -403,13 +435,13 @@ export function ProgressView({
               <button
                 type="button"
                 onClick={handleConfirmRestore}
-                className="rounded-xl px-4 py-2 text-xs font-semibold"
+                className="min-h-11 sm:min-h-9 rounded-xl px-4 py-2 text-xs font-semibold"
                 style={{
                   backgroundColor: 'var(--accent-solid)',
                   color: 'var(--text-on-accent)',
                 }}
               >
-                Ya, Pulihkan Progres
+                Pulihkan Progres
               </button>
               <button
                 type="button"
@@ -417,7 +449,7 @@ export function ProgressView({
                   setPendingBackup(null);
                   if (fileInputRef.current) fileInputRef.current.value = '';
                 }}
-                className="rounded-xl px-4 py-2 text-xs font-semibold"
+                className="min-h-11 sm:min-h-9 rounded-xl px-4 py-2 text-xs font-semibold"
                 style={{
                   backgroundColor: 'var(--bg-surface)',
                   color: 'var(--text-secondary)',
@@ -429,7 +461,6 @@ export function ProgressView({
           </div>
         )}
 
-        {/* Subtle Guarded Reset Option */}
         <div className="pt-3 flex flex-wrap items-center justify-between gap-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
           <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
             Ingin mengulang dari awal?
@@ -438,16 +469,16 @@ export function ProgressView({
             <button
               type="button"
               onClick={() => setConfirmingReset(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
+              className="inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
               style={{ color: 'var(--rate-again-text)' }}
             >
-              <RotateCcw className="h-3.5 w-3.5" />
+              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
               <span>Reset Progres</span>
             </button>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-medium" style={{ color: 'var(--rate-again-text)' }}>
-                Yakin hapus seluruh progres?
+                Hapus seluruh riwayat review? Kartu kustom tetap disimpan.
               </span>
               <button
                 type="button"
@@ -455,19 +486,19 @@ export function ProgressView({
                   onResetProgress();
                   setConfirmingReset(false);
                 }}
-                className="rounded-xl px-3 py-1.5 text-xs font-semibold"
+                className="min-h-11 sm:min-h-9 rounded-xl px-3 py-1.5 text-xs font-semibold"
                 style={{
                   backgroundColor: 'var(--rate-again-bg)',
                   border: '1px solid var(--rate-again-border)',
                   color: 'var(--rate-again-text)',
                 }}
               >
-                Ya, Reset
+                Hapus Progres Review
               </button>
               <button
                 type="button"
                 onClick={() => setConfirmingReset(false)}
-                className="rounded-xl px-3 py-1.5 text-xs font-semibold"
+                className="min-h-11 sm:min-h-9 rounded-xl px-3 py-1.5 text-xs font-semibold"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   color: 'var(--text-secondary)',

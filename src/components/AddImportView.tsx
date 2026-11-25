@@ -3,7 +3,6 @@ import {
   Upload,
   FileSpreadsheet,
   Zap,
-  Sparkles,
   AlertTriangle,
   CheckCircle2,
   Highlighter,
@@ -33,15 +32,15 @@ const POS_OPTIONS = [
 
 export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewProps) {
   const [mode, setMode] = useState<'csv' | 'quick'>('csv');
+  const csvTabRef = useRef<HTMLButtonElement | null>(null);
+  const quickTabRef = useRef<HTMLButtonElement | null>(null);
 
-  // CSV / TSV Import state
   const [rawText, setRawText] = useState('');
   const [csvDeckId, setCsvDeckId] = useState<string>(DEFAULT_CUSTOM_DECK_ID);
   const [newDeckName, setNewDeckName] = useState('');
   const [csvDefaultCefr, setCsvDefaultCefr] = useState<CefrLevel>('B1');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Quick Cloze state
   const [qcSentence, setQcSentence] = useState('');
   const [qcPhrase, setQcPhrase] = useState('');
   const [qcTranslation, setQcTranslation] = useState('');
@@ -51,6 +50,22 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
   const [qcCefr, setQcCefr] = useState<CefrLevel>('B2');
   const [qcPos, setQcPos] = useState('phrase');
   const [qcDeckId, setQcDeckId] = useState<string>(DEFAULT_CUSTOM_DECK_ID);
+
+  const handleTabKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'Home' || e.key === 'End') {
+      e.preventDefault();
+      const nextMode: 'csv' | 'quick' =
+        e.key === 'Home'
+          ? 'csv'
+          : e.key === 'End'
+            ? 'quick'
+            : mode === 'csv'
+              ? 'quick'
+              : 'csv';
+      setMode(nextMode);
+      (nextMode === 'csv' ? csvTabRef.current : quickTabRef.current)?.focus();
+    }
+  };
 
   const availableDecks = useMemo(() => {
     const hasPersonal = decks.some((d) => d.id === DEFAULT_CUSTOM_DECK_ID);
@@ -90,7 +105,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
     reader.onload = () => {
       const content = typeof reader.result === 'string' ? reader.result : '';
       setRawText(content);
-      onNotify('info', `File "${file.name}" dimuat — silakan periksa preview di bawah.`);
+      onNotify('info', `File "${file.name}" dimuat. Silakan periksa preview di bawah.`);
     };
     reader.onerror = () => {
       onNotify('error', 'Gagal membaca file. Pastikan file berformat CSV atau TSV teks biasa.');
@@ -127,7 +142,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
     if (fileInputRef.current) fileInputRef.current.value = '';
     onNotify(
       'success',
-      `${finalParsed.cards.length} kartu berhasil diimpor dan siap muncul di sesi review.`
+      `${finalParsed.cards.length} kartu diimpor dan siap muncul di sesi review.`
     );
   };
 
@@ -175,7 +190,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
     setQcDefinition('');
     setQcIpa('');
     setQcNotes('');
-    onNotify('success', `Kartu "${phrase}" tersimpan! Langsung siap direview.`);
+    onNotify('success', `Kartu "${phrase}" tersimpan dan langsung siap direview.`);
   };
 
   return (
@@ -185,11 +200,10 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
           Tambah & Import Kartu
         </h1>
         <p className="text-sm text-pretty" style={{ color: 'var(--text-secondary)' }}>
-          Sepenuhnya opsional — 4 deck siap pakai sudah cukup untuk rutinitas pagi Anda. Gunakan fitur ini kapan pun Anda menemukan kalimat bagus dari BBC atau ingin mengimpor daftar CSV/TSV.
+          4 deck siap pakai sudah cukup untuk rutinitas pagi Anda. Fitur ini opsional: gunakan saat menemukan kalimat bagus dari BBC atau ingin mengimpor daftar CSV/TSV.
         </p>
       </section>
 
-      {/* Sub-mode Switcher */}
       <div
         className="inline-flex rounded-2xl p-1"
         style={{
@@ -200,41 +214,50 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
         aria-label="Metode tambah kartu"
       >
         <button
+          ref={csvTabRef}
+          id="tab-csv"
           type="button"
           role="tab"
           aria-selected={mode === 'csv'}
+          aria-controls="panel-csv"
+          tabIndex={mode === 'csv' ? 0 : -1}
           onClick={() => setMode('csv')}
-          className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all"
+          onKeyDown={handleTabKeyDown}
+          className="inline-flex min-h-11 sm:min-h-9 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors"
           style={{
             backgroundColor: mode === 'csv' ? 'var(--bg-surface)' : 'transparent',
             color: mode === 'csv' ? 'var(--text-primary)' : 'var(--text-secondary)',
             boxShadow: mode === 'csv' ? '0 1px 3px oklch(0 0 0 / 0.08)' : 'none',
           }}
         >
-          <FileSpreadsheet className="h-4 w-4" />
+          <FileSpreadsheet className="h-4 w-4" aria-hidden="true" />
           <span>Import CSV / TSV</span>
         </button>
         <button
+          ref={quickTabRef}
+          id="tab-quick"
           type="button"
           role="tab"
           aria-selected={mode === 'quick'}
+          aria-controls="panel-quick"
+          tabIndex={mode === 'quick' ? 0 : -1}
           onClick={() => setMode('quick')}
-          className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all"
+          onKeyDown={handleTabKeyDown}
+          className="inline-flex min-h-11 sm:min-h-9 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors"
           style={{
             backgroundColor: mode === 'quick' ? 'var(--bg-surface)' : 'transparent',
             color: mode === 'quick' ? 'var(--text-primary)' : 'var(--text-secondary)',
             boxShadow: mode === 'quick' ? '0 1px 3px oklch(0 0 0 / 0.08)' : 'none',
           }}
         >
-          <Zap className="h-4 w-4" />
+          <Zap className="h-4 w-4" aria-hidden="true" />
           <span>Quick Cloze (10 Detik)</span>
         </button>
       </div>
 
       {mode === 'csv' ? (
-        <section className="space-y-5">
+        <section id="panel-csv" role="tabpanel" aria-labelledby="tab-csv" className="space-y-5">
           <div className="paper-card rounded-[24px] p-5 sm:p-6 space-y-5">
-            {/* Destination Deck & Default Level */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <label
@@ -248,7 +271,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                   id="csv-deck-select"
                   value={csvDeckId}
                   onChange={(e) => setCsvDeckId(e.target.value)}
-                  className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm outline-none"
+                  className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm"
                   style={{
                     backgroundColor: 'var(--bg-subtle)',
                     border: '1px solid var(--border-strong)',
@@ -260,7 +283,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                       {d.title}
                     </option>
                   ))}
-                  <option value="__new__">+ Buat Deck Baru…</option>
+                  <option value="__new__">+ Buat Deck Baru...</option>
                 </select>
               </div>
 
@@ -276,7 +299,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                   id="csv-cefr-select"
                   value={csvDefaultCefr}
                   onChange={(e) => setCsvDefaultCefr(e.target.value as CefrLevel)}
-                  className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm outline-none"
+                  className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm"
                   style={{
                     backgroundColor: 'var(--bg-subtle)',
                     border: '1px solid var(--border-strong)',
@@ -307,7 +330,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                   value={newDeckName}
                   onChange={(e) => setNewDeckName(e.target.value)}
                   placeholder="Contoh: Catatan BBC Minggu 4"
-                  className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm outline-none"
+                  className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm"
                   style={{
                     backgroundColor: 'var(--bg-subtle)',
                     border: '1px solid var(--border-strong)',
@@ -317,37 +340,38 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
               </div>
             )}
 
-            {/* File Picker + Template Buttons */}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain"
-                  onChange={(e) => handleCsvFileUpload(e.target.files?.[0])}
-                  className="hidden"
-                  id="csv-file-upload"
-                />
-                <label
-                  htmlFor="csv-file-upload"
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-colors hover:bg-[var(--bg-hover)]"
-                  style={{
-                    backgroundColor: 'var(--bg-subtle)',
-                    border: '1px solid var(--border-strong)',
-                    color: 'var(--text-primary)',
-                  }}
-                >
-                  <Upload className="h-3.5 w-3.5" />
-                  <span>Pilih File CSV / TSV</span>
-                </label>
+                <div className="relative">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain"
+                    onChange={(e) => handleCsvFileUpload(e.target.files?.[0])}
+                    className="sr-only peer"
+                    id="csv-file-upload"
+                  />
+                  <label
+                    htmlFor="csv-file-upload"
+                    className="inline-flex min-h-11 sm:min-h-9 cursor-pointer items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-colors hover:bg-[var(--bg-hover)] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--accent-solid)]"
+                    style={{
+                      backgroundColor: 'var(--bg-subtle)',
+                      border: '1px solid var(--border-strong)',
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    <Upload className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span>Pilih File CSV / TSV</span>
+                  </label>
+                </div>
 
                 <button
                   type="button"
                   onClick={() => setRawText(SAMPLE_CSV_TEMPLATE)}
-                  className="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
+                  className="inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
                   style={{ color: 'var(--accent-text)' }}
                 >
-                  <Sparkles className="h-3.5 w-3.5" />
+                  <FileSpreadsheet className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>Isi Contoh CSV</span>
                 </button>
               </div>
@@ -356,7 +380,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                 <button
                   type="button"
                   onClick={() => setRawText('')}
-                  className="text-xs font-medium hover:underline"
+                  className="min-h-11 sm:min-h-9 rounded-xl px-2 text-xs font-medium hover:underline"
                   style={{ color: 'var(--text-muted)' }}
                 >
                   Bersihkan
@@ -364,7 +388,6 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
               )}
             </div>
 
-            {/* Paste Textarea */}
             <div className="space-y-1.5">
               <label
                 htmlFor="csv-paste-input"
@@ -379,7 +402,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                 value={rawText}
                 onChange={(e) => setRawText(e.target.value)}
                 placeholder={'phrase,sentence,translation,cefr\nget the hang of,"I soon managed to get the hang of British idioms.",mulai menguasai,B2'}
-                className="w-full rounded-2xl p-3.5 font-mono-code text-base sm:text-xs leading-relaxed outline-none"
+                className="w-full rounded-xl p-3.5 font-mono-code text-base sm:text-xs leading-relaxed"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   border: '1px solid var(--border-strong)',
@@ -392,7 +415,6 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
             </div>
           </div>
 
-          {/* Automatic Live Preview */}
           {rawText.trim().length > 0 && (
             <div className="paper-card rounded-[24px] p-5 sm:p-6 space-y-4 animate-card-reveal">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -415,22 +437,21 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
 
                 <button
                   type="button"
-                  disabled={parsedPreview.cards.length === 0}
                   onClick={handleConfirmCsvImport}
-                  className="inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold transition-all disabled:opacity-40 hover:opacity-95"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-opacity hover:opacity-95"
                   style={{
                     backgroundColor: 'var(--accent-solid)',
                     color: 'var(--text-on-accent)',
                   }}
                 >
-                  <CheckCircle2 className="h-4 w-4" />
+                  <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                   <span>Import {parsedPreview.cards.length} Kartu</span>
                 </button>
               </div>
 
               {parsedPreview.warnings.length > 0 && (
                 <div
-                  className="rounded-2xl p-3.5 space-y-1 text-xs"
+                  className="rounded-xl p-3.5 space-y-1 text-xs"
                   style={{
                     backgroundColor: 'var(--rate-hard-bg)',
                     border: '1px solid var(--rate-hard-border)',
@@ -438,7 +459,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                   }}
                 >
                   <div className="flex items-center gap-1.5 font-semibold">
-                    <AlertTriangle className="h-3.5 w-3.5" />
+                    <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
                     <span>Catatan parsing ({parsedPreview.warnings.length}):</span>
                   </div>
                   <ul className="list-disc pl-5 space-y-0.5">
@@ -450,7 +471,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
               )}
 
               {parsedPreview.cards.length > 0 && (
-                <div className="overflow-x-auto rounded-2xl" style={{ border: '1px solid var(--border-subtle)' }}>
+                <div className="overflow-x-auto rounded-xl" style={{ border: '1px solid var(--border-subtle)' }}>
                   <table className="w-full text-left text-xs">
                     <thead style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-secondary)' }}>
                       <tr>
@@ -466,16 +487,16 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                           key={card.id}
                           style={{ borderTop: '1px solid var(--border-subtle)' }}
                         >
-                          <td className="px-3.5 py-2.5 font-semibold whitespace-nowrap">{card.phrase}</td>
-                          <td className="px-3.5 py-2.5 max-w-xs truncate" title={card.sentence}>
+                          <td className="px-3.5 py-2.5 font-semibold whitespace-nowrap align-top">{card.phrase}</td>
+                          <td className="px-3.5 py-2.5 min-w-[16rem] max-w-sm whitespace-normal leading-relaxed align-top">
                             {card.sentence}
                           </td>
-                          <td className="px-3.5 py-2.5" style={{ color: 'var(--text-secondary)' }}>
+                          <td className="px-3.5 py-2.5 align-top" style={{ color: 'var(--text-secondary)' }}>
                             {card.translationId}
                           </td>
-                          <td className="px-3.5 py-2.5">
+                          <td className="px-3.5 py-2.5 align-top">
                             <span
-                              className="rounded px-1.5 py-0.5 text-[10px] font-bold"
+                              className="rounded px-1.5 py-0.5 text-[11px] font-bold"
                               style={{ backgroundColor: 'var(--accent-soft)', color: 'var(--accent-text)' }}
                             >
                               {card.cefr}
@@ -491,8 +512,13 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
           )}
         </section>
       ) : (
-        /* Quick Cloze (10 Seconds) */
-        <form onSubmit={handleSaveQuickCloze} className="paper-card rounded-[24px] p-5 sm:p-6 space-y-5">
+        <form
+          id="panel-quick"
+          role="tabpanel"
+          aria-labelledby="tab-quick"
+          onSubmit={handleSaveQuickCloze}
+          className="paper-card rounded-[24px] p-5 sm:p-6 space-y-5"
+        >
           <div className="space-y-1.5">
             <label
               htmlFor="qc-sentence"
@@ -508,7 +534,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
               value={qcSentence}
               onChange={(e) => setQcSentence(e.target.value)}
               placeholder='Contoh: Regular reading helps you pick up natural expressions without stress.'
-              className="w-full rounded-2xl p-3.5 text-base sm:text-sm leading-relaxed outline-none"
+              className="w-full rounded-xl p-3.5 text-base sm:text-sm leading-relaxed"
               style={{
                 backgroundColor: 'var(--bg-subtle)',
                 border: '1px solid var(--border-strong)',
@@ -534,7 +560,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                   value={qcPhrase}
                   onChange={(e) => setQcPhrase(e.target.value)}
                   placeholder="Contoh: pick up"
-                  className="flex-1 rounded-xl px-3.5 py-2.5 text-base sm:text-sm outline-none"
+                  className="flex-1 rounded-xl px-3.5 py-2.5 text-base sm:text-sm"
                   style={{
                     backgroundColor: 'var(--bg-subtle)',
                     border: '1px solid var(--border-strong)',
@@ -544,14 +570,15 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                 <button
                   type="button"
                   onClick={handleWrapCloze}
+                  aria-label="Tandai frasa sebagai cloze"
                   title="Tandai frasa di dalam kalimat dengan {{...}}"
-                  className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-colors hover:bg-[var(--bg-hover)]"
+                  className="inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-colors hover:bg-[var(--bg-hover)]"
                   style={{
                     backgroundColor: 'var(--accent-soft)',
                     color: 'var(--accent-text)',
                   }}
                 >
-                  <Highlighter className="h-3.5 w-3.5" />
+                  <Highlighter className="h-3.5 w-3.5" aria-hidden="true" />
                   <span className="hidden sm:inline">Tandai</span>
                 </button>
               </div>
@@ -571,7 +598,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                 value={qcTranslation}
                 onChange={(e) => setQcTranslation(e.target.value)}
                 placeholder="Contoh: menyerap / mempelajari secara alami"
-                className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm outline-none"
+                className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   border: '1px solid var(--border-strong)',
@@ -581,17 +608,16 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
             </div>
           </div>
 
-          {/* Live Cloze Front Preview */}
           {qcParsedPreview && (
             <div
-              className="rounded-2xl p-4 space-y-1.5"
+              className="rounded-xl p-4 space-y-1.5"
               style={{
                 backgroundColor: 'var(--bg-subtle)',
                 border: '1px dashed var(--border-strong)',
               }}
             >
-              <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-                Preview Tampilan Sisi Depan Kartu
+              <div className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+                Preview tampilan sisi depan kartu
               </div>
               <p lang="en" className="font-serif-study text-lg leading-relaxed">
                 {qcParsedPreview.segments.map((seg, idx) =>
@@ -615,7 +641,6 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
             </div>
           )}
 
-          {/* Optional Metadata Row */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
               <label htmlFor="qc-deck" className="block text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
@@ -625,7 +650,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                 id="qc-deck"
                 value={qcDeckId}
                 onChange={(e) => setQcDeckId(e.target.value)}
-                className="w-full rounded-xl px-3 py-2.5 text-base sm:text-sm outline-none"
+                className="w-full rounded-xl px-3 py-2.5 text-base sm:text-sm"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   border: '1px solid var(--border-strong)',
@@ -648,7 +673,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                 id="qc-cefr"
                 value={qcCefr}
                 onChange={(e) => setQcCefr(e.target.value as CefrLevel)}
-                className="w-full rounded-xl px-3 py-2.5 text-base sm:text-sm outline-none"
+                className="w-full rounded-xl px-3 py-2.5 text-base sm:text-sm"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   border: '1px solid var(--border-strong)',
@@ -671,7 +696,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                 id="qc-pos"
                 value={qcPos}
                 onChange={(e) => setQcPos(e.target.value)}
-                className="w-full rounded-xl px-3 py-2.5 text-base sm:text-sm outline-none"
+                className="w-full rounded-xl px-3 py-2.5 text-base sm:text-sm"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   border: '1px solid var(--border-strong)',
@@ -687,7 +712,6 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
             </div>
           </div>
 
-          {/* Extra Optional Details */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
               <label htmlFor="qc-def" className="block text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
@@ -699,7 +723,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                 value={qcDefinition}
                 onChange={(e) => setQcDefinition(e.target.value)}
                 placeholder="to learn informally through practice"
-                className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm outline-none"
+                className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   border: '1px solid var(--border-strong)',
@@ -718,7 +742,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                 value={qcIpa}
                 onChange={(e) => setQcIpa(e.target.value)}
                 placeholder="/pɪk ʌp/"
-                className="w-full rounded-xl px-3.5 py-2.5 font-mono-code text-base sm:text-sm outline-none"
+                className="w-full rounded-xl px-3.5 py-2.5 font-mono-code text-base sm:text-sm"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   border: '1px solid var(--border-strong)',
@@ -737,7 +761,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                 value={qcNotes}
                 onChange={(e) => setQcNotes(e.target.value)}
                 placeholder="BBC 6 Minute English"
-                className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm outline-none"
+                className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   border: '1px solid var(--border-strong)',
@@ -749,13 +773,13 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
 
           <button
             type="submit"
-            className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-sm font-semibold transition-all hover:opacity-95"
+            className="flex min-h-11 w-full sm:w-auto items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold transition-opacity hover:opacity-95"
             style={{
               backgroundColor: 'var(--accent-solid)',
               color: 'var(--text-on-accent)',
             }}
           >
-            <Zap className="h-4 w-4" />
+            <Zap className="h-4 w-4" aria-hidden="true" />
             <span>Simpan Kartu Cloze</span>
           </button>
         </form>
