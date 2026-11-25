@@ -23,7 +23,7 @@ const fsrsParams = generatorParameters({
   request_retention: 0.9,
   maximum_interval: 365,
   enable_fuzz: false,
-  enable_short_term: true,
+  enable_short_term: false,
 });
 
 const scheduler = fsrs(fsrsParams);
@@ -71,6 +71,9 @@ export interface ActivityDayCell {
   label: string;
   shortDay: string;
   reviews: number;
+  practiceCompleted: number;
+  ratings: Record<ReviewRatingKey, number>;
+  listeningRatings: Partial<Record<ReviewRatingKey, number>>;
   newStudied: number;
   intensity: 0 | 1 | 2 | 3 | 4;
   isToday: boolean;
@@ -164,9 +167,13 @@ export function formatIntervalId(nextDue: Date, now: Date): string {
   return `${formatted} thn`;
 }
 
-/**
- * Computes next interval preview for all 4 human-friendly rating buttons using ts-fsrs.
- */
+export const REVIEW_RATINGS = [
+  { key: 'again', label: 'Baru', shortcut: '1' },
+  { key: 'hard', label: 'Susah', shortcut: '2' },
+  { key: 'good', label: 'Biasa', shortcut: '3' },
+  { key: 'easy', label: 'Mudah', shortcut: '4' },
+] as const;
+
 export function previewRatingOptions(
   stored: StoredFsrsCard | undefined,
   now: Date = new Date()
@@ -174,49 +181,29 @@ export function previewRatingOptions(
   const card = hydrateFsrsCard(stored, now);
   const preview = scheduler.repeat(card, now);
 
-  const defs: Array<{ key: ReviewRatingKey; label: string; shortcut: '1' | '2' | '3' | '4' }> = [
-    { key: 'again', label: 'Lupa', shortcut: '1' },
-    { key: 'hard', label: 'Susah', shortcut: '2' },
-    { key: 'good', label: 'Ingat', shortcut: '3' },
-    { key: 'easy', label: 'Mudah', shortcut: '4' },
-  ];
-
-  return defs.map((def) => {
+  return REVIEW_RATINGS.map((def) => {
     const nextCard = preview[RATING_MAP[def.key]].card;
     return {
-      key: def.key,
-      label: def.label,
-      shortcut: def.shortcut,
+      ...def,
       intervalLabel: formatIntervalId(nextCard.due, now),
       nextDue: nextCard.due,
     };
   });
 }
 
-/**
- * Rates a card using ts-fsrs and indicates whether it should be re-queued in the active session
- * (e.g., short intra-day learning/relearning step <= 30 minutes).
- */
 export function scheduleCardReview(
   stored: StoredFsrsCard | undefined,
   ratingKey: ReviewRatingKey,
   now: Date = new Date()
 ): {
   nextCard: StoredFsrsCard;
-  shouldRequeueInSession: boolean;
   intervalLabel: string;
 } {
   const card = hydrateFsrsCard(stored, now);
   const result = scheduler.next(card, now, RATING_MAP[ratingKey]);
   const serialized = serializeFsrsCard(result.card);
-  const diffMinutes = (result.card.due.getTime() - now.getTime()) / 60_000;
-  const isLearningState =
-    result.card.state === State.Learning || result.card.state === State.Relearning;
-  const shouldRequeueInSession = isLearningState && diffMinutes <= 30;
-
   return {
     nextCard: serialized,
-    shouldRequeueInSession,
     intervalLabel: formatIntervalId(result.card.due, now),
   };
 }
@@ -332,14 +319,13 @@ export function applyCardReview(
 ): {
   nextState: AppState;
   undoSnapshot: UndoSnapshot;
-  shouldRequeueInSession: boolean;
   intervalLabel: string;
 } {
   const dateKey = getLocalDateKey(now);
   const previousProgress = state.progress[card.id];
   const wasNew = !previousProgress || previousProgress.state === State.New || previousProgress.reps === 0;
 
-  const { nextCard, shouldRequeueInSession, intervalLabel } = scheduleCardReview(
+  const { nextCard, intervalLabel } = scheduleCardReview(
     previousProgress,
     ratingKey,
     now
@@ -388,7 +374,6 @@ export function applyCardReview(
       previousDailyActivity: previousDaily ? { ...previousDaily } : undefined,
       reviewLogId,
     },
-    shouldRequeueInSession,
     intervalLabel,
   };
 }
@@ -514,7 +499,7 @@ export function calculateProgressStats(params: {
 
   const activeDatesSet = new Set(
     Object.values(params.dailyActivity)
-      .filter((day) => day.reviews > 0)
+      .filter((day) => day.reviews > 0 || (day.practiceCompleted ?? 0) > 0)
       .map((day) => day.dateKey)
   );
 
@@ -558,19 +543,29 @@ export function calculateProgressStats(params: {
     const key = getLocalDateKey(d);
     const activity = params.dailyActivity[key];
     const reviews = activity?.reviews ?? 0;
+    const practiceCompleted = activity?.practiceCompleted ?? 0;
+    const totalPracticed = reviews + practiceCompleted;
     const newStudied = activity?.newStudied ?? 0;
 
     let intensity: 0 | 1 | 2 | 3 | 4 = 0;
-    if (reviews >= 25) intensity = 4;
-    else if (reviews >= 15) intensity = 3;
-    else if (reviews >= 6) intensity = 2;
-    else if (reviews >= 1) intensity = 1;
+    if (totalPracticed >= 25) intensity = 4;
+    else if (totalPracticed >= 15) intensity = 3;
+    else if (totalPracticed >= 6) intensity = 2;
+    else if (totalPracticed >= 1) intensity = 1;
 
     calendarDays.push({
       dateKey: key,
       label: `${d.getDate()} ${SHORT_MONTHS_ID[d.getMonth()]}`,
       shortDay: SHORT_DAYS_ID[d.getDay()],
       reviews,
+      practiceCompleted,
+      listeningRatings: activity?.listeningRatings ?? {},
+      ratings: {
+        again: (activity?.againCount ?? 0) + (activity?.practiceRatings?.again ?? 0),
+        hard: (activity?.hardCount ?? 0) + (activity?.practiceRatings?.hard ?? 0),
+        good: (activity?.goodCount ?? 0) + (activity?.practiceRatings?.good ?? 0),
+        easy: (activity?.easyCount ?? 0) + (activity?.practiceRatings?.easy ?? 0),
+      },
       newStudied,
       intensity,
       isToday: offset === 0,

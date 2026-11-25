@@ -1,5 +1,5 @@
 import type { CefrLevel, VocabCard } from '../types';
-import { extractClozePhrase, stripClozeMarkup } from '../srs/cloze';
+import { extractClozePhrase, getStudySentences, stripClozeMarkup } from '../srs/cloze';
 
 export interface CsvImportResult {
   cards: VocabCard[];
@@ -26,6 +26,10 @@ const HEADER_ALIASES: Record<string, keyof ColumnMap> = {
   context: 'sentence',
   cloze: 'sentence',
   kalimat: 'sentence',
+  sentencetranslationid: 'sentenceTranslationId',
+  terjemahankalimat: 'sentenceTranslationId',
+  practicesentence: 'practiceSentence',
+  kalimattebakkata: 'practiceSentence',
   ipa: 'ipa',
   phonetic: 'ipa',
   pronunciation: 'ipa',
@@ -54,6 +58,8 @@ const HEADER_ALIASES: Record<string, keyof ColumnMap> = {
 interface ColumnMap {
   phrase?: number;
   sentence?: number;
+  sentenceTranslationId?: number;
+  practiceSentence?: number;
   ipa?: number;
   definitionEn?: number;
   translationId?: number;
@@ -237,6 +243,8 @@ export function parseVocabImport(
     const partOfSpeech = get(map.partOfSpeech) || 'phrase';
     const cefr = normalizeCefr(get(map.cefr), defaultCefr);
     const notes = get(map.notes);
+    const practiceSentence = get(map.practiceSentence);
+    const sentenceTranslationId = get(map.sentenceTranslationId);
 
     // Support 2-column quick cloze format: "sentence with {{phrase}}, translation"
     if (!hasHeader && cols.length === 2 && extractClozePhrase(cols[0])) {
@@ -271,11 +279,18 @@ export function parseVocabImport(
       );
     }
 
+    const hasAlternate = practiceSentence && getStudySentences({ sentence, phrase, practiceSentence }).hasAlternate;
+    if (practiceSentence && !hasAlternate) {
+      warnings.push(`Baris ${rowNum} ("${phrase}"): kalimat Tebak Kata harus memuat bentuk kata yang sama. Kalimat Listening akan dipakai.`);
+    }
+
     cards.push({
       id: `${idPrefix}-${idx + 1}`,
       deckId: options.deckId,
       phrase,
       sentence,
+      ...(sentenceTranslationId ? { sentenceTranslationId } : {}),
+      ...(hasAlternate ? { practiceSentence } : {}),
       ipa: ipa || '',
       definitionEn: definitionEn || `Useful English expression: "${phrase}".`,
       translationId: translationId || 'Belum ada arti Indonesia',

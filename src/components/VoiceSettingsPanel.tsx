@@ -80,7 +80,8 @@ export function VoiceSettingsPanel({
     void getCachedAudioCount().then(setCachedCount);
   }, []);
 
-  const elevenLabsReady = isElevenLabsConfigured(serverStatus, elevenLabs, hasStoredLocalKey);
+  const elevenLabsReady = isElevenLabsConfigured(serverStatus, elevenLabs, hasStoredLocalKey) ||
+    (!serverStatus.available && (ttsProvider === 'elevenlabs' || cachedCount > 0));
   const effectiveProvider: TtsProvider =
     ttsProvider === 'elevenlabs' && elevenLabsReady ? 'elevenlabs' : 'browser';
 

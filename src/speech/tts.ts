@@ -25,6 +25,7 @@ export interface SpeakOptions {
 let activeAudioElement: HTMLAudioElement | null = null;
 let activeObjectUrl: string | null = null;
 let activeAbortController: AbortController | null = null;
+let playbackVersion = 0;
 
 export function isSpeechSupported(): boolean {
   return (
@@ -92,8 +93,11 @@ function cleanupHtmlAudio(): void {
   }
   if (activeAudioElement) {
     try {
+      activeAudioElement.onended = null;
+      activeAudioElement.onerror = null;
       activeAudioElement.pause();
-      activeAudioElement.src = '';
+      activeAudioElement.removeAttribute('src');
+      activeAudioElement.load();
     } catch {
       // Ignore cleanup errors
     }
@@ -110,6 +114,7 @@ function cleanupHtmlAudio(): void {
 }
 
 export function stopSpeaking(): void {
+  playbackVersion += 1;
   cleanupHtmlAudio();
   if (!isSpeechSupported()) return;
   try {
@@ -173,28 +178,27 @@ async function playAudioBlob(
   activeAudioElement = audio;
 
   audio.onended = () => {
-    if (activeAudioElement === audio) {
-      cleanupHtmlAudio();
-    }
+    if (activeAudioElement !== audio) return;
+    cleanupHtmlAudio();
     callbacks.onEnd?.();
   };
 
   audio.onerror = () => {
-    if (activeAudioElement === audio) {
-      cleanupHtmlAudio();
-    }
+    if (activeAudioElement !== audio) return;
+    cleanupHtmlAudio();
     callbacks.onError?.();
   };
 
   try {
-    callbacks.onStart?.('elevenlabs');
     await audio.play();
+    if (activeAudioElement !== audio) return false;
+    callbacks.onStart?.('elevenlabs');
     return true;
   } catch {
     if (activeAudioElement === audio) {
       cleanupHtmlAudio();
+      callbacks.onError?.();
     }
-    callbacks.onError?.();
     return false;
   }
 }
@@ -213,6 +217,7 @@ export async function speakEnglish(options: SpeakOptions): Promise<boolean> {
   }
 
   stopSpeaking();
+  const version = playbackVersion;
 
   const provider = options.provider ?? 'browser';
   if (provider !== 'elevenlabs') {
@@ -236,6 +241,7 @@ export async function speakEnglish(options: SpeakOptions): Promise<boolean> {
   });
 
   const cachedBlob = await getCachedAudio(cacheKey);
+  if (version !== playbackVersion) return false;
   if (cachedBlob) {
     return playAudioBlob(cachedBlob, options);
   }
@@ -262,9 +268,11 @@ export async function speakEnglish(options: SpeakOptions): Promise<boolean> {
     }
 
     await putCachedAudio(cacheKey, blob);
+    if (version !== playbackVersion) return false;
     options.onLoading?.(false);
     return playAudioBlob(blob, options);
   } catch (err) {
+    if (version !== playbackVersion) return false;
     options.onLoading?.(false);
     if (err instanceof ElevenLabsTtsError && err.code === 'aborted') {
       return false;
@@ -288,46 +296,5 @@ export async function speakEnglish(options: SpeakOptions): Promise<boolean> {
     if (activeAbortController === controller) {
       activeAbortController = null;
     }
-  }
-}
-
-/**
- * Quietly pre-warms the cache for the next card's sentence when using ElevenLabs
- * (especially helpful in Listening First mode for instant transitions).
- */
-export async function prefetchElevenLabsAudio(params: {
-  text: string;
-  accent: SpeechAccent;
-  rate: SpeechRate;
-  elevenLabs: ElevenLabsSettings;
-  apiKey?: string;
-}): Promise<void> {
-  const cleanText = params.text.trim();
-  if (!cleanText) return;
-
-  const voiceId = getVoiceIdForAccent(params.elevenLabs, params.accent);
-  const cacheKey = buildAudioCacheKey({
-    modelId: params.elevenLabs.modelId,
-    voiceId,
-    rate: params.rate,
-    text: cleanText,
-  });
-
-  const existing = await getCachedAudio(cacheKey);
-  if (existing) return;
-
-  try {
-    const apiKey = params.apiKey !== undefined ? params.apiKey : loadElevenLabsApiKey();
-    const blob = await synthesizeElevenLabsAudio({
-      text: cleanText,
-      voiceId,
-      modelId: params.elevenLabs.modelId,
-      rate: params.rate,
-      apiKey,
-      customProxyUrl: params.elevenLabs.customProxyUrl,
-    });
-    await putCachedAudio(cacheKey, blob);
-  } catch {
-    // Silent prefetch failure: main playback handles fallback gracefully
   }
 }

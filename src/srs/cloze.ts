@@ -147,6 +147,29 @@ export function parseClozeSentence(sentence: string, phrase: string): ParsedCloz
   };
 }
 
+export function normalizeStudyAnswer(value: string): string {
+  return value.normalize('NFC').replace(/[‘’]/g, "'").trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+export function getStudySentences(card: { sentence: string; phrase: string; practiceSentence?: string }) {
+  const source = parseClozeSentence(card.sentence, card.phrase);
+  const answer = source.segments.find((segment) => segment.type === 'cloze')?.value ?? source.targetPhrase;
+  const markAnswer = (sentence: string) => {
+    if (!answer) return parseClozeSentence(sentence, '');
+    const exact = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegExp(answer)}(?![\\p{L}\\p{N}])`, 'giu');
+    const marked = sentence.replace(exact, '{{$&}}');
+    return parseClozeSentence(marked, '');
+  };
+  const listening = markAnswer(source.cleanSentence);
+  const alternate = typeof card.practiceSentence === 'string' && markAnswer(stripClozeMarkup(card.practiceSentence));
+  return {
+    answer,
+    listening,
+    cloze: alternate && alternate.hasMatch ? alternate : listening,
+    hasAlternate: Boolean(alternate && alternate.hasMatch),
+  };
+}
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

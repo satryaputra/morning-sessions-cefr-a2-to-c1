@@ -4,6 +4,8 @@ import type {
   DeckDefinition,
   ElevenLabsModelId,
   LearningPhaseId,
+  ReviewRatingKey,
+  StoredFsrsCard,
   UserSettings,
   VocabCard,
 } from '../types';
@@ -26,7 +28,6 @@ export function getDefaultSettings(phaseId: LearningPhaseId = 'phase-1'): UserSe
     phaseId: phase.id,
     activeDeckIds: [...phase.recommendedDeckIds],
     dailyNewLimit: 10,
-    studyMode: 'cloze',
     showIndonesianHint: phase.suggestedHintDefault,
     accent: 'en-US',
     speechRate: 1.0,
@@ -65,6 +66,115 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function normalizeRatingCounts(raw: unknown) {
+  const counts = isPlainObject(raw) ? raw : {};
+  return {
+    again: typeof counts.again === 'number' ? counts.again : 0,
+    hard: typeof counts.hard === 'number' ? counts.hard : 0,
+    good: typeof counts.good === 'number' ? counts.good : 0,
+    easy: typeof counts.easy === 'number' ? counts.easy : 0,
+  };
+}
+
+const VALID_RATING_KEYS: ReadonlySet<ReviewRatingKey> = new Set(['again', 'hard', 'good', 'easy']);
+
+function isReviewRatingKey(value: unknown): value is ReviewRatingKey {
+  return typeof value === 'string' && VALID_RATING_KEYS.has(value as ReviewRatingKey);
+}
+
+function normalizeStoredFsrsCard(value: unknown): StoredFsrsCard | undefined {
+  if (
+    !isPlainObject(value) ||
+    typeof value.due !== 'string' ||
+    typeof value.stability !== 'number' ||
+    typeof value.difficulty !== 'number' ||
+    typeof value.state !== 'number'
+  ) {
+    return undefined;
+  }
+  return {
+    due: value.due,
+    stability: value.stability,
+    difficulty: value.difficulty,
+    elapsed_days: typeof value.elapsed_days === 'number' ? value.elapsed_days : 0,
+    scheduled_days: typeof value.scheduled_days === 'number' ? value.scheduled_days : 0,
+    learning_steps: typeof value.learning_steps === 'number' ? value.learning_steps : 0,
+    reps: typeof value.reps === 'number' ? value.reps : 0,
+    lapses: typeof value.lapses === 'number' ? value.lapses : 0,
+    state: value.state,
+    last_review: typeof value.last_review === 'string' ? value.last_review : undefined,
+  };
+}
+
+function normalizeRatingMap(
+  raw: unknown,
+  allowedIds?: Set<string>
+): Record<string, ReviewRatingKey> | undefined {
+  if (!isPlainObject(raw)) return undefined;
+  const result: Record<string, ReviewRatingKey> = {};
+  for (const [cardId, rating] of Object.entries(raw)) {
+    if (cardId.length > 0 && (!allowedIds || allowedIds.has(cardId)) && isReviewRatingKey(rating)) {
+      result[cardId] = rating;
+    }
+  }
+  return result;
+}
+
+function normalizeBaselines(raw: unknown): Record<string, StoredFsrsCard | null> | undefined {
+  if (!isPlainObject(raw)) return undefined;
+  const result: Record<string, StoredFsrsCard | null> = {};
+  for (const [cardId, value] of Object.entries(raw)) {
+    if (cardId.length === 0) continue;
+    if (value === null) {
+      result[cardId] = null;
+    } else {
+      const card = normalizeStoredFsrsCard(value);
+      if (card) result[cardId] = card;
+    }
+  }
+  return result;
+}
+
+function normalizeDailyStudy(raw: unknown): AppState['dailyStudy'] {
+  if (!isPlainObject(raw) || typeof raw.dateKey !== 'string') return undefined;
+  const ids = (value: unknown): string[] =>
+    Array.isArray(value)
+      ? [...new Set(value.filter((id): id is string => typeof id === 'string' && id.length > 0))]
+      : [];
+  const pairedIds = ids(raw.pairedIds);
+  const paired = new Set(pairedIds);
+  const listeningRatingsByCard = normalizeRatingMap(raw.listeningRatingsByCard, paired);
+  const answeredRatingsByCard = normalizeRatingMap(raw.answeredRatingsByCard);
+  const clozeDueIds = Array.isArray(raw.clozeDueIds) ? ids(raw.clozeDueIds) : undefined;
+  const clozeBaselines = normalizeBaselines(raw.clozeBaselines);
+  const listeningFinishedCount =
+    typeof raw.listeningFinishedCount === 'number' &&
+    Number.isFinite(raw.listeningFinishedCount) &&
+    raw.listeningFinishedCount >= 0
+      ? Math.floor(raw.listeningFinishedCount)
+      : undefined;
+  const clozeFinishedCount =
+    typeof raw.clozeFinishedCount === 'number' &&
+    Number.isFinite(raw.clozeFinishedCount) &&
+    raw.clozeFinishedCount >= 0
+      ? Math.floor(raw.clozeFinishedCount)
+      : undefined;
+
+  return {
+    dateKey: raw.dateKey,
+    pairedIds,
+    practiceIds: ids(raw.practiceIds).filter((id) => paired.has(id)),
+    listenedIds: ids(raw.listenedIds).filter((id) => paired.has(id)),
+    answeredIds: ids(raw.answeredIds),
+    ...(listeningRatingsByCard ? { listeningRatingsByCard } : {}),
+    ...(answeredRatingsByCard ? { answeredRatingsByCard } : {}),
+    ...(clozeDueIds ? { clozeDueIds } : {}),
+    ...(clozeBaselines ? { clozeBaselines } : {}),
+    ...(listeningFinishedCount !== undefined ? { listeningFinishedCount } : {}),
+    ...(clozeFinishedCount !== undefined ? { clozeFinishedCount } : {}),
+  };
+}
+
 /**
  * Validates and normalizes an unknown object into a safe AppState.
  */
@@ -86,11 +196,6 @@ export function normalizeAppState(raw: unknown): AppState {
     rawSettings.dailyNewLimit === 15
       ? rawSettings.dailyNewLimit
       : fallback.settings.dailyNewLimit;
-
-  const studyMode =
-    rawSettings.studyMode === 'cloze' || rawSettings.studyMode === 'listening'
-      ? rawSettings.studyMode
-      : fallback.settings.studyMode;
 
   const accent =
     rawSettings.accent === 'en-GB' || rawSettings.accent === 'en-US'
@@ -159,25 +264,9 @@ export function normalizeAppState(raw: unknown): AppState {
   const progress: AppState['progress'] = {};
   if (isPlainObject(raw.progress)) {
     for (const [cardId, value] of Object.entries(raw.progress)) {
-      if (
-        isPlainObject(value) &&
-        typeof value.due === 'string' &&
-        typeof value.stability === 'number' &&
-        typeof value.difficulty === 'number' &&
-        typeof value.state === 'number'
-      ) {
-        progress[cardId] = {
-          due: value.due,
-          stability: value.stability,
-          difficulty: value.difficulty,
-          elapsed_days: typeof value.elapsed_days === 'number' ? value.elapsed_days : 0,
-          scheduled_days: typeof value.scheduled_days === 'number' ? value.scheduled_days : 0,
-          learning_steps: typeof value.learning_steps === 'number' ? value.learning_steps : 0,
-          reps: typeof value.reps === 'number' ? value.reps : 0,
-          lapses: typeof value.lapses === 'number' ? value.lapses : 0,
-          state: value.state,
-          last_review: typeof value.last_review === 'string' ? value.last_review : undefined,
-        };
+      const card = normalizeStoredFsrsCard(value);
+      if (card) {
+        progress[cardId] = card;
       }
     }
   }
@@ -195,6 +284,9 @@ export function normalizeAppState(raw: unknown): AppState {
           goodCount: typeof entry.goodCount === 'number' ? entry.goodCount : 0,
           easyCount: typeof entry.easyCount === 'number' ? entry.easyCount : 0,
           extraNewGranted: typeof entry.extraNewGranted === 'number' ? entry.extraNewGranted : 0,
+          practiceCompleted: typeof entry.practiceCompleted === 'number' ? entry.practiceCompleted : 0,
+          practiceRatings: normalizeRatingCounts(entry.practiceRatings),
+          listeningRatings: normalizeRatingCounts(entry.listeningRatings),
         };
       }
     }
@@ -211,13 +303,43 @@ export function normalizeAppState(raw: unknown): AppState {
       )
     : [];
 
+  const trimmedHistory = reviewHistory.slice(-2000);
+  let dailyStudy = normalizeDailyStudy(raw.dailyStudy);
+
+  if (dailyStudy && dailyStudy.answeredIds.length > 0) {
+    let backfilledRatings: Record<string, ReviewRatingKey> | undefined =
+      dailyStudy.answeredRatingsByCard ? { ...dailyStudy.answeredRatingsByCard } : undefined;
+
+    for (const cardId of dailyStudy.answeredIds) {
+      if (backfilledRatings?.[cardId]) continue;
+      for (let i = trimmedHistory.length - 1; i >= 0; i -= 1) {
+        const entry = trimmedHistory[i];
+        if (
+          entry.cardId === cardId &&
+          entry.dateKey === dailyStudy.dateKey &&
+          isReviewRatingKey(entry.rating)
+        ) {
+          if (!backfilledRatings) backfilledRatings = {};
+          backfilledRatings[cardId] = entry.rating;
+          break;
+        }
+      }
+    }
+
+    if (backfilledRatings) {
+      dailyStudy = {
+        ...dailyStudy,
+        answeredRatingsByCard: backfilledRatings,
+      };
+    }
+  }
+
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
     settings: {
       phaseId,
       activeDeckIds,
       dailyNewLimit,
-      studyMode,
       showIndonesianHint:
         typeof rawSettings.showIndonesianHint === 'boolean'
           ? rawSettings.showIndonesianHint
@@ -232,7 +354,8 @@ export function normalizeAppState(raw: unknown): AppState {
     customCards,
     progress,
     dailyActivity,
-    reviewHistory: reviewHistory.slice(-2000),
+    reviewHistory: trimmedHistory,
+    dailyStudy,
   };
 }
 

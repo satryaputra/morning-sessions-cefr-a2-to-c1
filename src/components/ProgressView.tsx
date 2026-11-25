@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import type { AppState, MasteryBucket } from '../types';
 import type { ProgressStats } from '../srs/engine';
-import { MASTERY_LABELS } from '../srs/engine';
+import { MASTERY_LABELS, REVIEW_RATINGS } from '../srs/engine';
 import {
   parseBackup,
   serializeBackup,
@@ -107,79 +107,81 @@ export function ProgressView({
   const heatColor = (intensity: 0 | 1 | 2 | 3 | 4): string => `var(--heat-${intensity})`;
 
   return (
-    <div className="space-y-6 pb-8 animate-card-reveal">
-      <section>
-        <h1 className="font-serif-study text-3xl font-medium tracking-[-0.015em]">
+    <div className="min-w-0 space-y-6 pb-8 animate-card-reveal">
+      <section className="min-w-0">
+        <h1 className="font-serif-study text-3xl font-medium tracking-[-0.015em] break-words">
           Progres Belajar
         </h1>
-        <p className="mt-1 text-sm text-pretty" style={{ color: 'var(--text-secondary)' }}>
+        <p className="mt-1 text-sm text-pretty break-words" style={{ color: 'var(--text-secondary)' }}>
           Ringkasan kebiasaan harian, penguasaan kosakata, dan perkembangan level CEFR A2–C1 Anda.
         </p>
       </section>
 
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="paper-card rounded-2xl p-4 space-y-1.5">
-          <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--sun-text)' }}>
-            <Flame className="h-4 w-4" aria-hidden="true" />
-            <span>Streak Saat Ini</span>
+      <section className="progress-stats-wrap">
+        <div className="progress-stats-grid">
+          <div className="paper-card min-w-0 rounded-2xl p-[clamp(12px,3vw,1rem)] space-y-1.5 break-words">
+            <div className="flex flex-wrap items-center gap-1.5 text-xs font-medium min-w-0" style={{ color: 'var(--sun-text)' }}>
+              <Flame className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>Streak Saat Ini</span>
+            </div>
+            <div className="text-2xl sm:text-3xl font-bold tabular-nums break-words">
+              {stats.currentStreak}
+              <span className="ml-1 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                hari
+              </span>
+            </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-bold tabular-nums">
-            {stats.currentStreak}
-            <span className="ml-1 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-              hari
-            </span>
-          </div>
-        </div>
 
-        <div className="paper-card rounded-2xl p-4 space-y-1.5">
-          <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
-            <Trophy className="h-4 w-4" aria-hidden="true" />
-            <span>Rekor Terpanjang</span>
+          <div className="paper-card min-w-0 rounded-2xl p-[clamp(12px,3vw,1rem)] space-y-1.5 break-words">
+            <div className="flex flex-wrap items-center gap-1.5 text-xs font-medium min-w-0" style={{ color: 'var(--text-secondary)' }}>
+              <Trophy className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>Rekor Terpanjang</span>
+            </div>
+            <div className="text-2xl sm:text-3xl font-bold tabular-nums break-words">
+              {stats.longestStreak}
+              <span className="ml-1 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                hari
+              </span>
+            </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-bold tabular-nums">
-            {stats.longestStreak}
-            <span className="ml-1 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-              hari
-            </span>
-          </div>
-        </div>
 
-        <div className="paper-card rounded-2xl p-4 space-y-1.5">
-          <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--accent-text)' }}>
-            <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-            <span>Total Review</span>
+          <div className="paper-card min-w-0 rounded-2xl p-[clamp(12px,3vw,1rem)] space-y-1.5 break-words">
+            <div className="flex flex-wrap items-center gap-1.5 text-xs font-medium min-w-0" style={{ color: 'var(--accent-text)' }}>
+              <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>Total Review</span>
+            </div>
+            <div className="text-2xl sm:text-3xl font-bold tabular-nums break-words">
+              {stats.totalReviews}
+            </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-bold tabular-nums">
-            {stats.totalReviews}
-          </div>
-        </div>
 
-        <div className="paper-card rounded-2xl p-4 space-y-1.5">
-          <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
-            <Target className="h-4 w-4" aria-hidden="true" />
-            <span>Tingkat Ingat</span>
-          </div>
-          <div className="text-2xl sm:text-3xl font-bold tabular-nums">
-            {stats.retentionRate !== null ? `${stats.retentionRate}%` : '-'}
+          <div className="paper-card min-w-0 rounded-2xl p-[clamp(12px,3vw,1rem)] space-y-1.5 break-words">
+            <div className="flex flex-wrap items-center gap-1.5 text-xs font-medium min-w-0" style={{ color: 'var(--text-secondary)' }}>
+              <Target className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>Tingkat Ingat</span>
+            </div>
+            <div className="text-2xl sm:text-3xl font-bold tabular-nums break-words">
+              {stats.retentionRate !== null ? `${stats.retentionRate}%` : '-'}
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="paper-card rounded-[24px] p-5 sm:p-6 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
+      <section className="paper-card min-w-0 rounded-[24px] p-[clamp(12px,3.5vw,1.5rem)] space-y-4 break-words">
+        <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
+          <div className="min-w-0">
             <h2 className="text-base font-bold">Kalender Aktivitas 28 Hari</h2>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
               Pilih tanggal untuk melihat detail sesi review dalam 4 minggu terakhir.
             </p>
           </div>
-          <div className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--text-muted)' }}>
+          <div className="flex flex-wrap items-center gap-1.5 text-[11px] min-w-0" style={{ color: 'var(--text-muted)' }}>
             <span>Sedikit</span>
             {([0, 1, 2, 3, 4] as const).map((level) => (
               <span
                 key={level}
                 aria-hidden="true"
-                className="h-3 w-3 rounded-[4px]"
+                className="h-3 w-3 shrink-0 rounded-[4px]"
                 style={{ backgroundColor: heatColor(level) }}
               />
             ))}
@@ -187,17 +189,18 @@ export function ProgressView({
           </div>
         </div>
 
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-4 sm:grid-cols-7 gap-[6px] sm:gap-2 min-w-0">
           {stats.calendarDays.map((day) => {
             const isSelected = selectedDay?.dateKey === day.dateKey;
+            const totalPracticed = day.reviews + day.practiceCompleted;
             return (
               <button
                 key={day.dateKey}
                 type="button"
                 onClick={() => setSelectedDateKey(day.dateKey)}
                 aria-pressed={isSelected}
-                aria-label={`${day.label}: ${day.reviews} review, ${day.newStudied} kartu baru`}
-                className="flex min-h-11 flex-col items-center justify-center rounded-xl py-2 px-1 text-center transition-colors"
+                aria-label={`${day.label}, ${totalPracticed} kartu dilatih, ${day.newStudied} kartu baru`}
+                className="flex min-h-11 min-w-0 flex-col items-center justify-center rounded-xl py-2 px-1 text-center transition-colors"
                 style={{
                   backgroundColor: heatColor(day.intensity),
                   color:
@@ -214,9 +217,9 @@ export function ProgressView({
                 </span>
                 <span
                   className="mt-1 text-xs font-bold tabular-nums leading-none"
-                  style={day.reviews === 0 ? { color: 'var(--text-muted)' } : undefined}
+                  style={totalPracticed === 0 ? { color: 'var(--text-muted)' } : undefined}
                 >
-                  {day.reviews}
+                  {totalPracticed}
                 </span>
                 <span className="mt-1 text-[11px] leading-none hidden sm:inline">
                   {day.label}
@@ -228,7 +231,7 @@ export function ProgressView({
 
         {selectedDay && (
           <div
-            className="flex flex-wrap items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-xs"
+            className="flex flex-wrap items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-xs min-w-0"
             style={{
               backgroundColor: 'var(--bg-subtle)',
               color: 'var(--text-secondary)',
@@ -238,8 +241,9 @@ export function ProgressView({
               {selectedDay.label}
               {selectedDay.isToday ? ' (Hari Ini)' : ''}
             </span>
-            <div className="flex items-center gap-2.5 tabular-nums">
+            <div className="flex flex-wrap items-center gap-2.5 tabular-nums min-w-0">
               <span>{selectedDay.reviews} review</span>
+              {selectedDay.practiceCompleted > 0 && <span>{selectedDay.practiceCompleted} latihan ulang</span>}
               <span
                 aria-hidden="true"
                 className="h-3 w-px"
@@ -249,11 +253,38 @@ export function ProgressView({
             </div>
           </div>
         )}
+        {selectedDay && (
+          <section aria-labelledby="daily-rating-title" className="study-calendar-ratings min-w-0">
+            <h3 id="daily-rating-title">Penilaian kartu</h3>
+            <div className="grid gap-4 min-w-0">
+              {[
+                { title: 'Listening', counts: selectedDay.listeningRatings },
+                { title: 'Tebak Kata', counts: selectedDay.ratings },
+              ].map(({ title, counts }) => (
+                <div key={title} className="grid gap-2 min-w-0">
+                  <h4 className="text-sm font-semibold">{title}</h4>
+                  {REVIEW_RATINGS.some(({ key }) => (counts[key] ?? 0) > 0) ? (
+                    <dl>
+                      {REVIEW_RATINGS.map(({ key, label }) => (
+                        <div key={key}>
+                          <dt>{label}</dt>
+                          <dd>{counts[key] ?? 0}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : (
+                    <p>Belum ada penilaian pada tanggal ini.</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </section>
 
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <section className="paper-card rounded-[24px] p-5 sm:p-6 space-y-4">
-          <div>
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 min-w-0">
+        <section className="paper-card min-w-0 rounded-[24px] p-[clamp(12px,3.5vw,1.5rem)] space-y-4 break-words">
+          <div className="min-w-0">
             <h2 className="text-base font-bold">Status Penguasaan Kartu</h2>
             <p className="text-xs mt-0.5 tabular-nums" style={{ color: 'var(--text-muted)' }}>
               Total {stats.totalCards} kartu tersedia di seluruh deck Anda.
@@ -281,49 +312,51 @@ export function ProgressView({
             })}
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5">
-            {(['new', 'learning', 'mastering', 'memorized'] as MasteryBucket[]).map((bucket) => (
-              <div
-                key={bucket}
-                className="rounded-xl p-3.5"
-                style={{ backgroundColor: MASTERY_STYLES[bucket].soft }}
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    aria-hidden="true"
-                    className="h-2.5 w-2.5 rounded-full"
-                    style={{ backgroundColor: MASTERY_STYLES[bucket].bar }}
-                  />
-                  <span
-                    className="text-xs font-semibold"
-                    style={{ color: MASTERY_STYLES[bucket].text }}
-                  >
-                    {MASTERY_LABELS[bucket]}
-                  </span>
+          <div className="progress-mastery-wrap">
+            <div className="progress-mastery-grid">
+              {(['new', 'learning', 'mastering', 'memorized'] as MasteryBucket[]).map((bucket) => (
+                <div
+                  key={bucket}
+                  className="min-w-0 rounded-xl p-[clamp(10px,3vw,0.875rem)] break-words"
+                  style={{ backgroundColor: MASTERY_STYLES[bucket].soft }}
+                >
+                  <div className="flex flex-wrap items-center gap-2 min-w-0">
+                    <span
+                      aria-hidden="true"
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: MASTERY_STYLES[bucket].bar }}
+                    />
+                    <span
+                      className="text-xs font-semibold min-w-0"
+                      style={{ color: MASTERY_STYLES[bucket].text }}
+                    >
+                      {MASTERY_LABELS[bucket]}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 text-xl font-bold tabular-nums">
+                    {stats.masteryCounts[bucket]}
+                  </div>
                 </div>
-                <div className="mt-1.5 text-xl font-bold tabular-nums">
-                  {stats.masteryCounts[bucket]}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </section>
 
-        <section className="paper-card rounded-[24px] p-5 sm:p-6 space-y-4">
-          <div>
+        <section className="paper-card min-w-0 rounded-[24px] p-[clamp(12px,3.5vw,1.5rem)] space-y-4 break-words">
+          <div className="min-w-0">
             <h2 className="text-base font-bold">Progres per Level CEFR</h2>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
               Pantau pertumbuhan kosakata bertahap dari fondasi A2 hingga nuansa C1.
             </p>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 min-w-0">
             {stats.cefrBreakdown.map((item) => (
-              <div key={item.level} className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
+              <div key={item.level} className="space-y-1.5 min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 min-w-0">
                     <span
-                      className="rounded-md px-2 py-0.5 font-bold"
+                      className="rounded-md px-2 py-0.5 font-bold shrink-0"
                       style={{
                         backgroundColor: 'var(--accent-soft)',
                         color: 'var(--accent-text)',
@@ -331,7 +364,7 @@ export function ProgressView({
                     >
                       {item.level}
                     </span>
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 tabular-nums" style={{ color: 'var(--text-secondary)' }}>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 tabular-nums min-w-0" style={{ color: 'var(--text-secondary)' }}>
                       <span>
                         {item.started} / {item.total} mulai
                       </span>
@@ -375,8 +408,8 @@ export function ProgressView({
         </section>
       </div>
 
-      <section className="paper-card rounded-[24px] p-5 sm:p-6 space-y-4">
-        <div className="flex items-start gap-3">
+      <section className="paper-card min-w-0 rounded-[24px] p-[clamp(12px,3.5vw,1.5rem)] space-y-4 break-words">
+        <div className="flex items-start gap-3 min-w-0">
           <div
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
             style={{
@@ -386,7 +419,7 @@ export function ProgressView({
           >
             <ShieldCheck className="h-5 w-5" aria-hidden="true" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h2 className="text-base font-bold">Backup & Pindah Perangkat (JSON)</h2>
             <p className="text-xs mt-0.5 text-pretty" style={{ color: 'var(--text-secondary)' }}>
               Seluruh progres FSRS, streak, dan kartu kustom tersimpan aman di browser ini. Unduh backup JSON secara berkala agar mudah dipulihkan di HP atau laptop lain.
@@ -394,21 +427,21 @@ export function ProgressView({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 min-w-0">
           <button
             type="button"
             onClick={handleExportBackup}
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-opacity hover:opacity-95"
+            className="inline-flex min-h-11 max-w-full min-w-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-left transition-opacity hover:opacity-95"
             style={{
               backgroundColor: 'var(--accent-solid)',
               color: 'var(--text-on-accent)',
             }}
           >
-            <Download className="h-4 w-4" aria-hidden="true" />
-            <span>Export Backup JSON</span>
+            <Download className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="min-w-0 break-words">Export Backup JSON</span>
           </button>
 
-          <div className="relative">
+          <div className="relative min-w-0 max-w-full">
             <input
               ref={fileInputRef}
               type="file"
@@ -419,22 +452,22 @@ export function ProgressView({
             />
             <label
               htmlFor="backup-json-input"
-              className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-[var(--bg-hover)] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--accent-solid)]"
+              className="inline-flex min-h-11 max-w-full min-w-0 cursor-pointer items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-left transition-colors hover:bg-[var(--bg-hover)] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--accent-solid)]"
               style={{
                 backgroundColor: 'var(--bg-subtle)',
                 border: '1px solid var(--border-strong)',
                 color: 'var(--text-primary)',
               }}
             >
-              <Upload className="h-4 w-4" aria-hidden="true" />
-              <span>Import Backup JSON</span>
+              <Upload className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="min-w-0 break-words">Import Backup JSON</span>
             </label>
           </div>
         </div>
 
         {pendingBackup && (
           <div
-            className="rounded-xl p-4 space-y-3 animate-card-reveal"
+            className="min-w-0 rounded-xl p-4 space-y-3 animate-card-reveal break-words"
             style={{
               backgroundColor: 'var(--bg-subtle)',
               border: '1.5px solid var(--accent-solid)',
@@ -448,11 +481,11 @@ export function ProgressView({
               <strong className="tabular-nums">{pendingBackup.summary.customCards}</strong> kartu kustom, dan{' '}
               <strong className="tabular-nums">{pendingBackup.summary.activeDays}</strong> hari aktif.
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 min-w-0">
               <button
                 type="button"
                 onClick={handleConfirmRestore}
-                className="min-h-11 sm:min-h-9 rounded-xl px-4 py-2 text-xs font-semibold"
+                className="min-h-11 sm:min-h-9 max-w-full min-w-0 rounded-xl px-4 py-2 text-xs font-semibold"
                 style={{
                   backgroundColor: 'var(--accent-solid)',
                   color: 'var(--text-on-accent)',
@@ -466,7 +499,7 @@ export function ProgressView({
                   setPendingBackup(null);
                   if (fileInputRef.current) fileInputRef.current.value = '';
                 }}
-                className="min-h-11 sm:min-h-9 rounded-xl px-4 py-2 text-xs font-semibold"
+                className="min-h-11 sm:min-h-9 max-w-full min-w-0 rounded-xl px-4 py-2 text-xs font-semibold"
                 style={{
                   backgroundColor: 'var(--bg-surface)',
                   color: 'var(--text-secondary)',
@@ -478,23 +511,23 @@ export function ProgressView({
           </div>
         )}
 
-        <div className="pt-3 flex flex-wrap items-center justify-between gap-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+        <div className="pt-3 flex flex-wrap items-center justify-between gap-2 min-w-0" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+          <span className="text-xs min-w-0" style={{ color: 'var(--text-muted)' }}>
             Ingin mengulang dari awal?
           </span>
           {!confirmingReset ? (
             <button
               type="button"
               onClick={() => setConfirmingReset(true)}
-              className="inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
+              className="inline-flex min-h-11 sm:min-h-9 max-w-full min-w-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--bg-subtle)]"
               style={{ color: 'var(--rate-again-text)' }}
             >
-              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+              <RotateCcw className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               <span>Reset Progres</span>
             </button>
           ) : (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium" style={{ color: 'var(--rate-again-text)' }}>
+            <div className="flex flex-wrap items-center gap-2 min-w-0">
+              <span className="text-xs font-medium min-w-0" style={{ color: 'var(--rate-again-text)' }}>
                 Hapus seluruh riwayat review? Kartu kustom tetap disimpan.
               </span>
               <button
@@ -503,7 +536,7 @@ export function ProgressView({
                   onResetProgress();
                   setConfirmingReset(false);
                 }}
-                className="min-h-11 sm:min-h-9 rounded-xl px-3 py-1.5 text-xs font-semibold"
+                className="min-h-11 sm:min-h-9 max-w-full min-w-0 rounded-xl px-3 py-1.5 text-xs font-semibold"
                 style={{
                   backgroundColor: 'var(--rate-again-bg)',
                   border: '1px solid var(--rate-again-border)',
@@ -515,7 +548,7 @@ export function ProgressView({
               <button
                 type="button"
                 onClick={() => setConfirmingReset(false)}
-                className="min-h-11 sm:min-h-9 rounded-xl px-3 py-1.5 text-xs font-semibold"
+                className="min-h-11 sm:min-h-9 max-w-full min-w-0 rounded-xl px-3 py-1.5 text-xs font-semibold"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   color: 'var(--text-secondary)',

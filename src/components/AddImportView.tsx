@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import type { CefrLevel, DeckDefinition, VocabCard } from '../types';
 import { parseVocabImport, SAMPLE_CSV_TEMPLATE } from '../importExport/csvParser';
-import { applyClozeMarkup, parseClozeSentence } from '../srs/cloze';
+import { applyClozeMarkup, getStudySentences, parseClozeSentence } from '../srs/cloze';
 import { DEFAULT_CUSTOM_DECK_ID } from '../data';
 
 interface AddImportViewProps {
@@ -48,6 +48,10 @@ export function AddImportView({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [qcSentence, setQcSentence] = useState('');
+  const [qcSentenceTranslation, setQcSentenceTranslation] = useState('');
+  const [qcPracticeSentence, setQcPracticeSentence] = useState('');
+  const [qcPracticeError, setQcPracticeError] = useState(false);
+  const practiceSentenceRef = useRef<HTMLTextAreaElement>(null);
   const [qcPhrase, setQcPhrase] = useState('');
   const [qcTranslation, setQcTranslation] = useState('');
   const [qcDefinition, setQcDefinition] = useState('');
@@ -165,9 +169,17 @@ export function AddImportView({
     const sentence = qcSentence.trim();
     const parsed = parseClozeSentence(sentence, qcPhrase.trim());
     const phrase = qcPhrase.trim() || (parsed.hasMatch ? parsed.targetPhrase : '');
+    const practiceSentence = qcPracticeSentence.trim();
+    const sentenceTranslationId = qcSentenceTranslation.trim();
 
     if (!sentence || !phrase) {
       onNotify('error', 'Isi kalimat bahasa Inggris dan frasa target (atau tandai dengan {{frasa}}).');
+      return;
+    }
+
+    if (practiceSentence && !getStudySentences({ sentence, phrase, practiceSentence }).hasAlternate) {
+      setQcPracticeError(true);
+      practiceSentenceRef.current?.focus();
       return;
     }
 
@@ -176,6 +188,8 @@ export function AddImportView({
       deckId: qcDeckId,
       phrase,
       sentence,
+      ...(sentenceTranslationId ? { sentenceTranslationId } : {}),
+      ...(practiceSentence ? { practiceSentence } : {}),
       ipa: qcIpa.trim(),
       definitionEn:
         qcDefinition.trim() || `Useful English phrase from your reading/listening: "${phrase}".`,
@@ -189,6 +203,9 @@ export function AddImportView({
 
     onImportCards([newCard]);
     setQcSentence('');
+    setQcSentenceTranslation('');
+    setQcPracticeSentence('');
+    setQcPracticeError(false);
     setQcPhrase('');
     setQcTranslation('');
     setQcDefinition('');
@@ -423,7 +440,7 @@ export function AddImportView({
                 }}
               />
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                Mendukung header kolom otomatis (<code className="font-mono-code">phrase, sentence, ipa, definition, translation, partOfSpeech, cefr, notes</code>) atau format ringkas 2 kolom dengan <code className="font-mono-code">{'{{cloze}}'}</code>.
+                Kolom opsional <code className="font-mono-code">practiceSentence</code> memuat contoh untuk Tebak Kata dan <code className="font-mono-code">sentenceTranslationId</code> memuat terjemahan kalimat Listening. Format ringkas 2 kolom dengan <code className="font-mono-code">{'{{cloze}}'}</code> juga bisa dipakai.
               </p>
             </div>
           </div>
@@ -569,7 +586,6 @@ export function AddImportView({
                 <input
                   id="qc-phrase"
                   type="text"
-                  required
                   value={qcPhrase}
                   onChange={(e) => setQcPhrase(e.target.value)}
                   placeholder="Contoh: pick up"
@@ -619,6 +635,48 @@ export function AddImportView({
                 }}
               />
             </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label htmlFor="qc-practice-sentence" className="text-xs font-semibold leading-5 text-[var(--text-secondary)]">
+              Kalimat Tebak Kata (opsional)
+            </label>
+            <textarea
+              ref={practiceSentenceRef}
+              id="qc-practice-sentence"
+              rows={2}
+              lang="en"
+              value={qcPracticeSentence}
+              onChange={(event) => {
+                setQcPracticeSentence(event.target.value);
+                setQcPracticeError(false);
+              }}
+              aria-describedby={qcPracticeError ? 'qc-practice-help qc-practice-error' : 'qc-practice-help'}
+              aria-invalid={qcPracticeError || undefined}
+              className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--bg-subtle)] p-3.5 text-base leading-relaxed sm:text-sm"
+              placeholder="Short podcasts help you pick up natural expressions."
+            />
+            <p id="qc-practice-help" className="text-xs text-[var(--text-secondary)]">
+              Gunakan kata target yang sama dalam konteks serupa.
+            </p>
+            {qcPracticeError && (
+              <p id="qc-practice-error" role="alert" className="text-xs text-[var(--rate-again-text)]">
+                Salin bentuk kata dari kalimat Listening ke kalimat ini.
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label htmlFor="qc-sentence-translation" className="text-xs font-semibold leading-5 text-[var(--text-secondary)]">
+              Terjemahan kalimat Listening (opsional)
+            </label>
+            <textarea
+              id="qc-sentence-translation"
+              rows={2}
+              value={qcSentenceTranslation}
+              onChange={(event) => setQcSentenceTranslation(event.target.value)}
+              className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--bg-subtle)] p-3.5 text-base leading-relaxed sm:text-sm"
+            />
           </div>
 
           {qcParsedPreview && (

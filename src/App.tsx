@@ -9,7 +9,8 @@ import type {
   SettingsSectionId,
   SpeechAccent,
   SpeechRate,
-  StudyMode,
+  ReviewRatingKey,
+  StudyStage,
   ThemePreference,
   TtsProvider,
   VocabCard,
@@ -23,22 +24,22 @@ import {
 } from './data';
 import {
   createInitialAppState,
+  getLocalDateKey,
   loadAppState,
   saveAppState,
 } from './storage/state';
 import {
-  buildDailyQueue,
   calculateProgressStats,
   grantExtraNewCards,
-  undoCardReview,
-  type UndoSnapshot,
 } from './srs/engine';
+import { completeListening, completeStudyAnswer, getDailyStudy, markStageFinished } from './srs/dailyStudy';
 import {
   checkServerTtsStatus,
   isElevenLabsConfigured,
   loadElevenLabsApiKey,
   type ServerTtsStatus,
 } from './speech/elevenlabs';
+import { stopSpeaking } from './speech/tts';
 import { AppHeader } from './components/AppHeader';
 import { TodayView } from './components/TodayView';
 import { ProgressView } from './components/ProgressView';
@@ -51,10 +52,11 @@ export default function App() {
   const [state, setState] = useState<AppState>(() => loadAppState());
   const [activeTab, setActiveTab] = useState<NavTab>('today');
   const [settingsSection, setSettingsSection] = useState<SettingsSectionId>('learning');
-  const [inReviewSession, setInReviewSession] = useState(false);
-  const [sessionInitialQueue, setSessionInitialQueue] = useState<VocabCard[]>([]);
+  const [session, setSession] = useState<{ stage: StudyStage; dateKey: string; readOnly: boolean } | null>(null);
+  const [studyClock, setStudyClock] = useState(() => new Date());
+  const dateKey = getLocalDateKey(studyClock);
+  const currentSession = session?.dateKey === dateKey ? session : null;
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
-  const [serverTtsChecked, setServerTtsChecked] = useState(false);
   const [serverTtsStatus, setServerTtsStatus] = useState<ServerTtsStatus>({
     available: false,
     serverConfigured: false,
@@ -68,7 +70,6 @@ export default function App() {
     void checkServerTtsStatus().then((status) => {
       if (!active) return;
       setServerTtsStatus(status);
-      setServerTtsChecked(true);
     });
     return () => {
       active = false;
@@ -79,7 +80,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!serverTtsChecked) return;
+    if (!serverTtsStatus.available) return;
     const ready = isElevenLabsConfigured(
       serverTtsStatus,
       state.settings.elevenLabs,
@@ -95,7 +96,6 @@ export default function App() {
       }));
     }
   }, [
-    serverTtsChecked,
     serverTtsStatus,
     state.settings.ttsProvider,
     state.settings.elevenLabs,
@@ -117,6 +117,16 @@ export default function App() {
   useEffect(() => {
     saveAppState(state);
   }, [state]);
+
+  useEffect(() => {
+    const refreshClock = () => setStudyClock(new Date());
+    const timer = window.setInterval(refreshClock, 60_000);
+    window.addEventListener('focus', refreshClock);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', refreshClock);
+    };
+  }, []);
 
   const [systemDark, setSystemDark] = useState<boolean>(() =>
     typeof window !== 'undefined' && window.matchMedia
@@ -156,8 +166,10 @@ export default function App() {
       progress: 'Progres',
       settings: 'Setelan',
     };
-    document.title = inReviewSession ? 'Sesi Review' : tabTitles[activeTab];
-  }, [activeTab, inReviewSession]);
+    document.title = currentSession
+      ? (currentSession.stage === 'listening' ? 'Listening' : 'Tebak Kata')
+      : tabTitles[activeTab];
+  }, [activeTab, currentSession]);
 
   const allDecks: DeckDefinition[] = useMemo(() => {
     const hasPersonalCards = state.customCards.some((c) => c.deckId === DEFAULT_CUSTOM_DECK_ID);
@@ -176,23 +188,7 @@ export default function App() {
     return allDecks.filter((d) => set.has(d.id));
   }, [allDecks, state.settings.activeDeckIds]);
 
-  const queueInfo = useMemo(
-    () =>
-      buildDailyQueue({
-        cards: allCards,
-        progress: state.progress,
-        activeDeckIds: state.settings.activeDeckIds,
-        dailyNewLimit: state.settings.dailyNewLimit,
-        dailyActivity: state.dailyActivity,
-      }),
-    [
-      allCards,
-      state.progress,
-      state.settings.activeDeckIds,
-      state.settings.dailyNewLimit,
-      state.dailyActivity,
-    ]
-  );
+  const study = useMemo(() => getDailyStudy(state, allCards, studyClock), [state, allCards, studyClock]);
 
   const stats = useMemo(
     () =>
@@ -200,8 +196,9 @@ export default function App() {
         cards: allCards,
         progress: state.progress,
         dailyActivity: state.dailyActivity,
+        now: studyClock,
       }),
-    [allCards, state.progress, state.dailyActivity]
+    [allCards, state.progress, state.dailyActivity, studyClock]
   );
 
   const handleChangeTheme = (theme: ThemePreference) => {
@@ -247,23 +244,6 @@ export default function App() {
       'success',
       `${phase.title} (${phase.cefrTarget}) aktif. Deck rekomendasi otomatis dipilih.`
     );
-  };
-
-  const handleChangeStudyMode = (studyMode: StudyMode) => {
-    setState((prev) => ({
-      ...prev,
-      settings: { ...prev.settings, studyMode },
-    }));
-  };
-
-  const handleToggleHint = () => {
-    setState((prev) => ({
-      ...prev,
-      settings: {
-        ...prev.settings,
-        showIndonesianHint: !prev.settings.showIndonesianHint,
-      },
-    }));
   };
 
   const handleChangeAccent = (accent: SpeechAccent) => {
@@ -315,44 +295,85 @@ export default function App() {
     notify('info', `Jatah kata baru harian diatur ke ${dailyNewLimit} kartu/hari.`);
   };
 
-  const handleStartReview = () => {
-    if (queueInfo.queue.length === 0) return;
-    setSessionInitialQueue(queueInfo.queue);
-    setInReviewSession(true);
+  const handleStartStudy = (extra = false) => {
+    const now = new Date();
+    const current = getDailyStudy(state, allCards, now);
+    const canAddExtra =
+      extra &&
+      (current.clozeCards.length === 0 || current.clozeFinished) &&
+      current.extraCount > 0;
+    const base = canAddExtra
+      ? grantExtraNewCards(state, current.extraCount, now)
+      : state;
+    const next = base === state ? current : getDailyStudy(base, allCards, now);
+    setStudyClock(now);
+    const needsListening = next.listeningCards.length > 0 && !next.listeningFinished;
+    const needsCloze = next.clozeCards.length > 0 && !next.clozeFinished;
+    if (!needsListening && !needsCloze) return;
+    setState({ ...base, dailyStudy: next.plan });
+    setSession({
+      dateKey: next.plan.dateKey,
+      stage: needsListening ? 'listening' : 'cloze',
+      readOnly: false,
+    });
   };
 
-  const handleAddExtraFromToday = () => {
-    const nextState = grantExtraNewCards(state, 5, new Date());
-    setState(nextState);
-    const refreshed = buildDailyQueue({
-      cards: allCards,
-      progress: nextState.progress,
-      activeDeckIds: nextState.settings.activeDeckIds,
-      dailyNewLimit: nextState.settings.dailyNewLimit,
-      dailyActivity: nextState.dailyActivity,
-    });
-    if (refreshed.queue.length > 0) {
-      setSessionInitialQueue(refreshed.queue);
-      setInReviewSession(true);
+  const handleStartStage = (stage: StudyStage) => {
+    const now = new Date();
+    const current = getDailyStudy(state, allCards, now);
+    setStudyClock(now);
+    if (stage === 'listening') {
+      if (current.listeningCards.length === 0) return;
+      setState((prev) => ({ ...prev, dailyStudy: current.plan }));
+      setSession({
+        dateKey: current.plan.dateKey,
+        stage: 'listening',
+        readOnly: current.listeningFinished,
+      });
+      return;
     }
-    notify('success', '5 kartu ekstra ditambahkan ke sesi hari ini.');
-  };
-
-  const handleGrantExtraInSession = (): VocabCard[] => {
-    const nextState = grantExtraNewCards(state, 5, new Date());
-    setState(nextState);
-    const refreshed = buildDailyQueue({
-      cards: allCards,
-      progress: nextState.progress,
-      activeDeckIds: nextState.settings.activeDeckIds,
-      dailyNewLimit: nextState.settings.dailyNewLimit,
-      dailyActivity: nextState.dailyActivity,
+    if (
+      (current.listeningCards.length > 0 && !current.listeningFinished) ||
+      current.clozeCards.length === 0
+    ) {
+      return;
+    }
+    setState((prev) => ({ ...prev, dailyStudy: current.plan }));
+    setSession({
+      dateKey: current.plan.dateKey,
+      stage: 'cloze',
+      readOnly: current.clozeFinished,
     });
-    return refreshed.queue;
   };
 
-  const handleUndoSnapshot = (snapshot: UndoSnapshot) => {
-    setState((prev) => undoCardReview(prev, snapshot));
+  const handleExitStudy = useCallback(() => {
+    stopSpeaking();
+    setStudyClock(new Date());
+    setSession(null);
+    setIsVoiceModalOpen(false);
+    requestAnimationFrame(() => document.getElementById('today-title')?.focus());
+  }, []);
+
+  useEffect(() => {
+    if (session && session.dateKey !== dateKey) {
+      handleExitStudy();
+    }
+  }, [session, dateKey, handleExitStudy]);
+
+  const handleRating = (card: VocabCard, rating: ReviewRatingKey) => {
+    const now = new Date();
+    if (getLocalDateKey(now) !== dateKey) {
+      handleExitStudy();
+      return false;
+    }
+    const result = currentSession?.stage === 'listening'
+      ? { nextState: completeListening(state, dateKey, card.id, rating) }
+      : completeStudyAnswer(state, dateKey, card, rating, now);
+    if (!result) return false;
+    if (result.nextState !== state) {
+      setState(result.nextState);
+    }
+    return true;
   };
 
   const handleImportCards = (newCards: VocabCard[], newDeckTitle?: string) => {
@@ -436,27 +457,32 @@ export default function App() {
     />
   );
 
-  if (inReviewSession) {
+  if (currentSession) {
     return (
       <>
         {skipLink}
         <ReviewSession
-          initialQueue={sessionInitialQueue}
-          state={state}
+          key={`${currentSession.dateKey}-${currentSession.stage}-${currentSession.readOnly ? 'ro' : 'active'}`}
+          stage={currentSession.stage}
+          study={study}
+          readOnly={currentSession.readOnly}
+          settings={state.settings}
           decks={allDecks}
-          streak={stats.currentStreak}
-          availableExtraNewCount={queueInfo.availableExtraNewCount}
-          onCommitState={setState}
-          onUndoSnapshot={handleUndoSnapshot}
-          onGrantExtraAndGetCards={handleGrantExtraInSession}
-          onChangeStudyMode={handleChangeStudyMode}
-          onToggleHint={handleToggleHint}
-          onChangeAccent={handleChangeAccent}
-          onChangeSpeechRate={handleChangeSpeechRate}
+          onRate={handleRating}
+          onContinueToCloze={
+            currentSession.stage === 'listening' && study.clozeCards.length > 0 && !study.clozeFinished
+              ? () => setSession({ dateKey: currentSession.dateKey, stage: 'cloze', readOnly: false })
+              : undefined
+          }
+          onFinishStage={() => {
+            const totalCards =
+              currentSession.stage === 'listening'
+                ? study.listeningCards.length
+                : study.clozeCards.length;
+            setState((prev) => markStageFinished(prev, dateKey, currentSession.stage, totalCards));
+          }}
           onOpenVoiceSettings={() => setIsVoiceModalOpen(true)}
-          serverElevenLabsConfigured={serverTtsStatus.serverConfigured}
-          onExit={() => setInReviewSession(false)}
-          onNotify={notify}
+          onExit={handleExitStudy}
         />
         {voiceModal}
         <Toast toast={toast} onDismiss={() => setToast(null)} />
@@ -471,7 +497,7 @@ export default function App() {
         activeTab={activeTab}
         onSelectTab={setActiveTab}
         streak={stats.currentStreak}
-        dueBadgeCount={queueInfo.totalCount}
+        dueBadgeCount={study.cloze.length}
       />
 
       <main
@@ -481,16 +507,13 @@ export default function App() {
       >
         {activeTab === 'today' && (
           <TodayView
-            queueInfo={queueInfo}
+            study={study}
             phaseId={state.settings.phaseId}
-            studyMode={state.settings.studyMode}
             accent={state.settings.accent}
-            streak={stats.currentStreak}
-            dailyNewLimit={state.settings.dailyNewLimit}
             activeDecks={activeDecks}
-            onStartReview={handleStartReview}
-            onAddExtraCards={handleAddExtraFromToday}
-            onChangeStudyMode={handleChangeStudyMode}
+            onStart={() => handleStartStudy()}
+            onStartStage={handleStartStage}
+            onAddExtra={() => handleStartStudy(true)}
             onGoToDecks={() => handleOpenSettingsSection('decks')}
           />
         )}
