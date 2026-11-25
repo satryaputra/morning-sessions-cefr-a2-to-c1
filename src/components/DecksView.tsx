@@ -4,11 +4,9 @@ import {
   Volume2,
   BookOpen,
   X,
-  Check,
 } from 'lucide-react';
 import type {
   CefrLevel,
-  DailyNewPreset,
   DeckDefinition,
   ElevenLabsSettings,
   LearningPhaseId,
@@ -28,20 +26,13 @@ interface DecksViewProps {
   progress: Record<string, StoredFsrsCard>;
   activeDeckIds: string[];
   phaseId: LearningPhaseId;
-  dailyNewLimit: DailyNewPreset;
   accent: SpeechAccent;
   speechRate: SpeechRate;
   ttsProvider: TtsProvider;
   elevenLabs: ElevenLabsSettings;
   onToggleDeck: (deckId: string) => void;
-  onChangeDailyNewLimit: (limit: DailyNewPreset) => void;
+  embedded?: boolean;
 }
-
-const PRESETS: Array<{ value: DailyNewPreset; label: string; desc: string }> = [
-  { value: 5, label: 'Ringan', desc: '5 kata baru/hari • ~5–7 menit' },
-  { value: 10, label: 'Standar', desc: '10 kata baru/hari • ~10–12 menit' },
-  { value: 15, label: 'Intensif', desc: '15 kata baru/hari • ~15 menit' },
-];
 
 const CEFR_FILTERS: Array<'ALL' | CefrLevel> = ['ALL', 'A2', 'B1', 'B2', 'C1'];
 
@@ -51,13 +42,12 @@ export function DecksView({
   progress,
   activeDeckIds,
   phaseId,
-  dailyNewLimit,
   accent,
   speechRate,
   ttsProvider,
   elevenLabs,
   onToggleDeck,
-  onChangeDailyNewLimit,
+  embedded = false,
 }: DecksViewProps) {
   const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -124,73 +114,24 @@ export function DecksView({
   }, [selectedDeckSummary, searchQuery, cefrFilter]);
 
   return (
-    <div className="space-y-6 pb-8 animate-card-reveal">
-      <section>
-        <h1 className="font-serif-study text-3xl font-medium tracking-[-0.015em]">
-          Deck Siap Pakai
-        </h1>
-        <p className="mt-1 text-sm text-pretty" style={{ color: 'var(--text-secondary)' }}>
-          Aktifkan deck yang sesuai dengan mode belajar Anda dan atur ritme kartu baru harian.
-        </p>
-      </section>
-
-      <section className="paper-card rounded-[24px] p-5 space-y-3">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-sm font-semibold">Jatah Kartu Baru Harian</h2>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              Cukup pilih ritme nyaman. Antrean review lama tetap otomatis dijaga agar tidak menumpuk.
-            </p>
-          </div>
+    <div className={embedded ? 'flex flex-col gap-5 animate-card-reveal' : 'space-y-6 pb-8 animate-card-reveal'}>
+      {embedded ? (
+        <div className="paper-card rounded-[24px] p-5 sm:p-6">
+          <h2 className="text-base font-bold">Deck Kosakata</h2>
+          <p className="mt-1 text-xs leading-relaxed text-pretty" style={{ color: 'var(--text-secondary)' }}>
+            Aktifkan deck yang sesuai dengan mode belajar Anda dan telusuri daftar katanya untuk antrean review harian.
+          </p>
         </div>
-
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-          {PRESETS.map((preset) => {
-            const isSelected = dailyNewLimit === preset.value;
-            return (
-              <button
-                key={preset.value}
-                type="button"
-                onClick={() => onChangeDailyNewLimit(preset.value)}
-                aria-pressed={isSelected}
-                className="flex min-h-11 items-start justify-between rounded-xl p-3.5 text-left transition-colors"
-                style={{
-                  backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--bg-subtle)',
-                  border: isSelected
-                    ? '1.5px solid var(--accent-solid)'
-                    : '1.5px solid transparent',
-                }}
-              >
-                <div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-sm font-bold">{preset.label}</span>
-                    <span
-                      className="text-sm font-bold tabular-nums"
-                      style={{ color: 'var(--accent-text)' }}
-                    >
-                      {preset.value}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                    {preset.desc}
-                  </p>
-                </div>
-                {isSelected && (
-                  <span
-                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
-                    style={{
-                      backgroundColor: 'var(--accent-solid)',
-                      color: 'var(--text-on-accent)',
-                    }}
-                  >
-                    <Check className="h-3 w-3" strokeWidth={2.5} aria-hidden="true" />
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </section>
+      ) : (
+        <section>
+          <h1 className="font-serif-study text-3xl font-medium tracking-[-0.015em]">
+            Deck Siap Pakai
+          </h1>
+          <p className="mt-1 text-sm text-pretty" style={{ color: 'var(--text-secondary)' }}>
+            Aktifkan deck yang sesuai dengan mode belajar Anda dan telusuri daftar katanya.
+          </p>
+        </section>
+      )}
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {deckSummaries.map(({ deck, total, due, unseen, started, mastered, isActive, isRecommended }) => {
@@ -273,11 +214,27 @@ export function DecksView({
                 </div>
 
                 <div className="space-y-1.5 pt-1">
-                  <div className="flex items-center justify-between text-xs tabular-nums" style={{ color: 'var(--text-secondary)' }}>
-                    <span>
-                      <strong style={{ color: 'var(--text-primary)' }}>{total}</strong> kartu •{' '}
-                      {due} jatuh tempo • {unseen} baru
-                    </span>
+                  <div
+                    className="flex flex-wrap items-center justify-between gap-2 text-xs tabular-nums"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <span>
+                        <strong style={{ color: 'var(--text-primary)' }}>{total}</strong> kartu
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className="hidden sm:block h-3 w-px"
+                        style={{ backgroundColor: 'var(--border-strong)' }}
+                      />
+                      <span>{due} jatuh tempo</span>
+                      <span
+                        aria-hidden="true"
+                        className="hidden sm:block h-3 w-px"
+                        style={{ backgroundColor: 'var(--border-strong)' }}
+                      />
+                      <span>{unseen} baru</span>
+                    </div>
                     <span className="font-semibold">{progressPct}% mulai</span>
                   </div>
                   <div
@@ -339,7 +296,7 @@ export function DecksView({
         >
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-lg font-bold">{selectedDeckSummary.deck.title}</h2>
+              <h3 className="text-lg font-bold">{selectedDeckSummary.deck.title}</h3>
               <p className="text-xs mt-0.5 tabular-nums" style={{ color: 'var(--text-muted)' }}>
                 Menampilkan {filteredPreviewCards.length} dari {selectedDeckSummary.total} kartu
               </p>

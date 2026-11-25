@@ -27,7 +27,9 @@ export type ReviewRatingKey = 'again' | 'hard' | 'good' | 'easy';
 
 export type MasteryBucket = 'new' | 'learning' | 'mastering' | 'memorized';
 
-export type NavTab = 'today' | 'decks' | 'add' | 'progress' | 'settings';
+export type NavTab = 'today' | 'progress' | 'settings';
+
+export type SettingsSectionId = 'learning' | 'voice' | 'decks' | 'import';
 
 export interface VocabCard {
   id: string;

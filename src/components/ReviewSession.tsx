@@ -1027,12 +1027,63 @@ export function ReviewSession({
                       Space
                     </kbd>
                   </button>
-                  <p className="hidden md:block text-center text-xs" style={{ color: 'var(--text-muted)' }}>
-                    Pintasan: <span className="font-mono-code">Space</span> balik kartu •{' '}
-                    <span className="font-mono-code">R</span> audio •{' '}
-                    <span className="font-mono-code">H</span> petunjuk ID •{' '}
-                    <span className="font-mono-code">Z</span> undo
-                  </p>
+                  <div
+                    className="hidden md:flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-xs"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      <kbd
+                        className="rounded px-1.5 py-0.5 font-mono-code text-[11px] font-semibold"
+                        style={{
+                          backgroundColor: 'var(--bg-subtle)',
+                          color: 'var(--text-secondary)',
+                          border: '1px solid var(--border-subtle)',
+                        }}
+                      >
+                        Space
+                      </kbd>
+                      <span>Balik kartu</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <kbd
+                        className="rounded px-1.5 py-0.5 font-mono-code text-[11px] font-semibold"
+                        style={{
+                          backgroundColor: 'var(--bg-subtle)',
+                          color: 'var(--text-secondary)',
+                          border: '1px solid var(--border-subtle)',
+                        }}
+                      >
+                        R
+                      </kbd>
+                      <span>Audio</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <kbd
+                        className="rounded px-1.5 py-0.5 font-mono-code text-[11px] font-semibold"
+                        style={{
+                          backgroundColor: 'var(--bg-subtle)',
+                          color: 'var(--text-secondary)',
+                          border: '1px solid var(--border-subtle)',
+                        }}
+                      >
+                        H
+                      </kbd>
+                      <span>Petunjuk ID</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <kbd
+                        className="rounded px-1.5 py-0.5 font-mono-code text-[11px] font-semibold"
+                        style={{
+                          backgroundColor: 'var(--bg-subtle)',
+                          color: 'var(--text-secondary)',
+                          border: '1px solid var(--border-subtle)',
+                        }}
+                      >
+                        Z
+                      </kbd>
+                      <span>Undo</span>
+                    </span>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-2.5">

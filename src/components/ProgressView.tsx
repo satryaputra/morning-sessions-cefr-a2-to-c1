@@ -212,8 +212,11 @@ export function ProgressView({
                 <span className="text-[11px] font-medium leading-none">
                   {day.shortDay}
                 </span>
-                <span className="mt-1 text-xs font-bold tabular-nums leading-none">
-                  {day.reviews > 0 ? day.reviews : '·'}
+                <span
+                  className="mt-1 text-xs font-bold tabular-nums leading-none"
+                  style={day.reviews === 0 ? { color: 'var(--text-muted)' } : undefined}
+                >
+                  {day.reviews}
                 </span>
                 <span className="mt-1 text-[11px] leading-none hidden sm:inline">
                   {day.label}
@@ -235,9 +238,15 @@ export function ProgressView({
               {selectedDay.label}
               {selectedDay.isToday ? ' (Hari Ini)' : ''}
             </span>
-            <span className="tabular-nums">
-              {selectedDay.reviews} review · {selectedDay.newStudied} kartu baru
-            </span>
+            <div className="flex items-center gap-2.5 tabular-nums">
+              <span>{selectedDay.reviews} review</span>
+              <span
+                aria-hidden="true"
+                className="h-3 w-px"
+                style={{ backgroundColor: 'var(--border-strong)' }}
+              />
+              <span>{selectedDay.newStudied} kartu baru</span>
+            </div>
           </div>
         )}
       </section>
@@ -322,9 +331,17 @@ export function ProgressView({
                     >
                       {item.level}
                     </span>
-                    <span className="tabular-nums" style={{ color: 'var(--text-secondary)' }}>
-                      {item.started} / {item.total} mulai • {item.mastered} dikuasai
-                    </span>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 tabular-nums" style={{ color: 'var(--text-secondary)' }}>
+                      <span>
+                        {item.started} / {item.total} mulai
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className="h-3 w-px"
+                        style={{ backgroundColor: 'var(--border-strong)' }}
+                      />
+                      <span>{item.mastered} dikuasai</span>
+                    </div>
                   </div>
                   <span className="font-semibold tabular-nums">{item.percentStarted}%</span>
                 </div>

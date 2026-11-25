@@ -80,11 +80,24 @@ export function TodayView({
           </h1>
         </div>
         <div
-          className="mt-2 sm:mt-0 text-xs font-medium text-pretty"
+          className="mt-2 sm:mt-0 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-pretty"
           style={{ color: 'var(--text-secondary)' }}
         >
-          {currentPhase.title} ({currentPhase.cefrTarget}) · {activeDecks.length} deck aktif · Aksen{' '}
-          {accent === 'en-US' ? 'US' : 'UK'}
+          <span>
+            {currentPhase.title} ({currentPhase.cefrTarget})
+          </span>
+          <span
+            aria-hidden="true"
+            className="hidden sm:block h-3 w-px"
+            style={{ backgroundColor: 'var(--border-strong)' }}
+          />
+          <span>{activeDecks.length} deck aktif</span>
+          <span
+            aria-hidden="true"
+            className="hidden sm:block h-3 w-px"
+            style={{ backgroundColor: 'var(--border-strong)' }}
+          />
+          <span>Aksen {accent === 'en-US' ? 'US' : 'UK'}</span>
         </div>
       </section>
 
@@ -100,7 +113,7 @@ export function TodayView({
             <div className="space-y-1">
               <h2 className="text-xl font-semibold">Belum ada deck yang aktif</h2>
               <p className="mx-auto max-w-md text-sm" style={{ color: 'var(--text-secondary)' }}>
-                Aktifkan minimal satu deck di halaman Deck atau pilih mode belajar di Setelan untuk mulai sesi hari ini.
+                Aktifkan minimal satu deck atau pilih mode belajar di menu Setelan untuk mulai sesi hari ini.
               </p>
             </div>
             <button
@@ -138,15 +151,23 @@ export function TodayView({
                     kartu menunggu
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-sm" style={{ color: 'var(--text-secondary)' }}>
                   <span className="tabular-nums">
                     <strong style={{ color: 'var(--text-primary)' }}>{queueInfo.dueCount}</strong> review ulang
                   </span>
-                  <span aria-hidden="true" style={{ color: 'var(--border-strong)' }}>•</span>
+                  <span
+                    aria-hidden="true"
+                    className="hidden sm:block h-3.5 w-px"
+                    style={{ backgroundColor: 'var(--border-strong)' }}
+                  />
                   <span className="tabular-nums">
                     <strong style={{ color: 'var(--text-primary)' }}>{queueInfo.newCount}</strong> kata baru
                   </span>
-                  <span aria-hidden="true" style={{ color: 'var(--border-strong)' }}>•</span>
+                  <span
+                    aria-hidden="true"
+                    className="hidden sm:block h-3.5 w-px"
+                    style={{ backgroundColor: 'var(--border-strong)' }}
+                  />
                   <span className="inline-flex items-center gap-1 tabular-nums">
                     <Clock className="h-3.5 w-3.5" aria-hidden="true" />
                     ~{queueInfo.estimatedMinutes} menit
@@ -223,10 +244,15 @@ export function TodayView({
               className="rounded-xl p-4"
               style={{ backgroundColor: 'var(--bg-subtle)' }}
             >
-              <div className="flex items-center justify-between text-xs font-medium">
-                <span style={{ color: 'var(--text-secondary)' }}>
-                  Target hari ini • jatah {dailyNewLimit} kata baru/hari
-                </span>
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs font-medium">
+                <div className="flex flex-wrap items-baseline gap-x-2">
+                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Target hari ini
+                  </span>
+                  <span style={{ color: 'var(--text-muted)' }}>
+                    Jatah {dailyNewLimit} kata baru/hari
+                  </span>
+                </div>
                 <span className="font-semibold tabular-nums" style={{ color: 'var(--text-primary)' }}>
                   {queueInfo.reviewsToday} selesai ({completionPct}%)
                 </span>

@@ -16,6 +16,7 @@ interface AddImportViewProps {
   decks: DeckDefinition[];
   onImportCards: (cards: VocabCard[], newDeckTitle?: string) => void;
   onNotify: (tone: 'success' | 'info' | 'error', text: string) => void;
+  embedded?: boolean;
 }
 
 const CEFR_OPTIONS: CefrLevel[] = ['A2', 'B1', 'B2', 'C1'];
@@ -30,7 +31,12 @@ const POS_OPTIONS = [
   'adverb',
 ];
 
-export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewProps) {
+export function AddImportView({
+  decks,
+  onImportCards,
+  onNotify,
+  embedded = false,
+}: AddImportViewProps) {
   const [mode, setMode] = useState<'csv' | 'quick'>('csv');
   const csvTabRef = useRef<HTMLButtonElement | null>(null);
   const quickTabRef = useRef<HTMLButtonElement | null>(null);
@@ -121,9 +127,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
       return;
     }
 
-    const actualDeckId = isCreatingNew
-      ? `custom-${Date.now()}`
-      : csvDeckId;
+    const actualDeckId = isCreatingNew ? `custom-${Date.now()}` : csvDeckId;
 
     const finalParsed = parseVocabImport(rawText, {
       deckId: actualDeckId,
@@ -194,18 +198,27 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
   };
 
   return (
-    <div className="space-y-6 pb-8 animate-card-reveal">
-      <section className="space-y-2">
-        <h1 className="font-serif-study text-3xl font-medium tracking-[-0.015em]">
-          Tambah & Import Kartu
-        </h1>
-        <p className="text-sm text-pretty" style={{ color: 'var(--text-secondary)' }}>
-          4 deck siap pakai sudah cukup untuk rutinitas harian Anda. Fitur ini opsional: gunakan saat menemukan kalimat bagus dari bacaan atau ingin mengimpor daftar CSV/TSV.
-        </p>
-      </section>
+    <div className={embedded ? 'flex flex-col gap-5 animate-card-reveal' : 'space-y-6 pb-8 animate-card-reveal'}>
+      {embedded ? (
+        <div className="paper-card rounded-[24px] p-5 sm:p-6">
+          <h2 className="text-base font-bold">Tambah & Import Kartu</h2>
+          <p className="mt-1 text-xs leading-relaxed text-pretty" style={{ color: 'var(--text-secondary)' }}>
+            Tambahkan kalimat bagus dari bacaan secara cepat atau impor daftar kosakata lewat CSV/TSV.
+          </p>
+        </div>
+      ) : (
+        <section className="space-y-2">
+          <h1 className="font-serif-study text-3xl font-medium tracking-[-0.015em]">
+            Tambah & Import Kartu
+          </h1>
+          <p className="text-sm text-pretty" style={{ color: 'var(--text-secondary)' }}>
+            4 deck siap pakai sudah cukup untuk rutinitas harian Anda. Fitur ini opsional: gunakan saat menemukan kalimat bagus dari bacaan atau ingin mengimpor daftar CSV/TSV.
+          </p>
+        </section>
+      )}
 
       <div
-        className="inline-flex rounded-2xl p-1"
+        className="inline-flex self-start rounded-2xl p-1"
         style={{
           backgroundColor: 'var(--bg-subtle)',
           border: '1px solid var(--border-subtle)',
@@ -256,13 +269,13 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
       </div>
 
       {mode === 'csv' ? (
-        <section id="panel-csv" role="tabpanel" aria-labelledby="tab-csv" className="space-y-5">
-          <div className="paper-card rounded-[24px] p-5 sm:p-6 space-y-5">
+        <section id="panel-csv" role="tabpanel" aria-labelledby="tab-csv" className="flex flex-col gap-5">
+          <div className="paper-card rounded-[24px] p-5 sm:p-6 flex flex-col gap-5">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
+              <div className="flex flex-col gap-2">
                 <label
                   htmlFor="csv-deck-select"
-                  className="block text-xs font-semibold"
+                  className="block text-xs font-semibold leading-5"
                   style={{ color: 'var(--text-secondary)' }}
                 >
                   Simpan ke Deck
@@ -271,7 +284,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                   id="csv-deck-select"
                   value={csvDeckId}
                   onChange={(e) => setCsvDeckId(e.target.value)}
-                  className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm"
+                  className="w-full min-h-11 sm:min-h-10 rounded-xl px-3.5 py-2 text-base sm:text-sm"
                   style={{
                     backgroundColor: 'var(--bg-subtle)',
                     border: '1px solid var(--border-strong)',
@@ -287,10 +300,10 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                 </select>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="flex flex-col gap-2">
                 <label
                   htmlFor="csv-cefr-select"
-                  className="block text-xs font-semibold"
+                  className="block text-xs font-semibold leading-5"
                   style={{ color: 'var(--text-secondary)' }}
                 >
                   CEFR Default (jika kolom level kosong)
@@ -299,7 +312,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                   id="csv-cefr-select"
                   value={csvDefaultCefr}
                   onChange={(e) => setCsvDefaultCefr(e.target.value as CefrLevel)}
-                  className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm"
+                  className="w-full min-h-11 sm:min-h-10 rounded-xl px-3.5 py-2 text-base sm:text-sm"
                   style={{
                     backgroundColor: 'var(--bg-subtle)',
                     border: '1px solid var(--border-strong)',
@@ -316,10 +329,10 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
             </div>
 
             {csvDeckId === '__new__' && (
-              <div className="space-y-1.5">
+              <div className="flex flex-col gap-2">
                 <label
                   htmlFor="new-deck-name"
-                  className="block text-xs font-semibold"
+                  className="block text-xs font-semibold leading-5"
                   style={{ color: 'var(--text-secondary)' }}
                 >
                   Nama Deck Baru
@@ -330,7 +343,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                   value={newDeckName}
                   onChange={(e) => setNewDeckName(e.target.value)}
                   placeholder="Contoh: Catatan Minggu 4"
-                  className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm"
+                  className="w-full min-h-11 sm:min-h-10 rounded-xl px-3.5 py-2 text-base sm:text-sm"
                   style={{
                     backgroundColor: 'var(--bg-subtle)',
                     border: '1px solid var(--border-strong)',
@@ -388,10 +401,10 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
               )}
             </div>
 
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-2">
               <label
                 htmlFor="csv-paste-input"
-                className="block text-xs font-semibold"
+                className="block text-xs font-semibold leading-5"
                 style={{ color: 'var(--text-secondary)' }}
               >
                 Atau tempel (paste) langsung teks CSV / TSV di sini
@@ -416,12 +429,12 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
           </div>
 
           {rawText.trim().length > 0 && (
-            <div className="paper-card rounded-[24px] p-5 sm:p-6 space-y-4 animate-card-reveal">
+            <div className="paper-card rounded-[24px] p-5 sm:p-6 flex flex-col gap-4 animate-card-reveal">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="space-y-0.5">
-                  <h2 className="text-base font-bold">
+                <div className="flex flex-col gap-0.5">
+                  <h3 className="text-base font-bold">
                     Preview Otomatis ({parsedPreview.cards.length} kartu siap impor)
-                  </h2>
+                  </h3>
                   <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                     Format terdeteksi:{' '}
                     <strong>
@@ -430,8 +443,8 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                         : parsedPreview.delimiter === ';'
                           ? 'CSV (Titik koma)'
                           : 'CSV (Koma)'}
-                    </strong>{' '}
-                    • {parsedPreview.hasHeader ? 'Dengan baris header' : 'Tanpa header'}
+                    </strong>
+                    , {parsedPreview.hasHeader ? 'dengan baris header' : 'tanpa header'}
                   </p>
                 </div>
 
@@ -517,12 +530,12 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
           role="tabpanel"
           aria-labelledby="tab-quick"
           onSubmit={handleSaveQuickCloze}
-          className="paper-card rounded-[24px] p-5 sm:p-6 space-y-5"
+          className="paper-card rounded-[24px] p-5 sm:p-6 flex flex-col gap-5"
         >
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-2">
             <label
               htmlFor="qc-sentence"
-              className="block text-xs font-semibold"
+              className="block text-xs font-semibold leading-5"
               style={{ color: 'var(--text-secondary)' }}
             >
               1. Tempel kalimat bahasa Inggris dari bacaan atau podcast
@@ -544,10 +557,10 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-2">
               <label
                 htmlFor="qc-phrase"
-                className="block text-xs font-semibold"
+                className="block text-xs font-semibold leading-5"
                 style={{ color: 'var(--text-secondary)' }}
               >
                 2. Frasa target yang ingin dikosongkan
@@ -560,7 +573,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                   value={qcPhrase}
                   onChange={(e) => setQcPhrase(e.target.value)}
                   placeholder="Contoh: pick up"
-                  className="flex-1 rounded-xl px-3.5 py-2.5 text-base sm:text-sm"
+                  className="flex-1 min-h-11 sm:min-h-10 rounded-xl px-3.5 py-2 text-base sm:text-sm"
                   style={{
                     backgroundColor: 'var(--bg-subtle)',
                     border: '1px solid var(--border-strong)',
@@ -572,7 +585,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                   onClick={handleWrapCloze}
                   aria-label="Tandai frasa sebagai cloze"
                   title="Tandai frasa di dalam kalimat dengan {{...}}"
-                  className="inline-flex min-h-11 sm:min-h-9 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-colors hover:bg-[var(--bg-hover)]"
+                  className="inline-flex min-h-11 sm:min-h-10 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-colors hover:bg-[var(--bg-hover)]"
                   style={{
                     backgroundColor: 'var(--accent-soft)',
                     color: 'var(--accent-text)',
@@ -584,10 +597,10 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
               </div>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-2">
               <label
                 htmlFor="qc-translation"
-                className="block text-xs font-semibold"
+                className="block text-xs font-semibold leading-5"
                 style={{ color: 'var(--text-secondary)' }}
               >
                 3. Arti Indonesia ringkas (petunjuk)
@@ -598,7 +611,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                 value={qcTranslation}
                 onChange={(e) => setQcTranslation(e.target.value)}
                 placeholder="Contoh: menyerap / mempelajari secara alami"
-                className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm"
+                className="w-full min-h-11 sm:min-h-10 rounded-xl px-3.5 py-2 text-base sm:text-sm"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   border: '1px solid var(--border-strong)',
@@ -610,7 +623,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
 
           {qcParsedPreview && (
             <div
-              className="rounded-xl p-4 space-y-1.5"
+              className="rounded-xl p-4 flex flex-col gap-1.5"
               style={{
                 backgroundColor: 'var(--bg-subtle)',
                 border: '1px dashed var(--border-strong)',
@@ -642,15 +655,15 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
           )}
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="space-y-1.5">
-              <label htmlFor="qc-deck" className="block text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="qc-deck" className="block text-xs font-semibold leading-5" style={{ color: 'var(--text-secondary)' }}>
                 Deck Tujuan
               </label>
               <select
                 id="qc-deck"
                 value={qcDeckId}
                 onChange={(e) => setQcDeckId(e.target.value)}
-                className="w-full rounded-xl px-3 py-2.5 text-base sm:text-sm"
+                className="w-full min-h-11 sm:min-h-10 rounded-xl px-3 py-2 text-base sm:text-sm"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   border: '1px solid var(--border-strong)',
@@ -665,15 +678,15 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
               </select>
             </div>
 
-            <div className="space-y-1.5">
-              <label htmlFor="qc-cefr" className="block text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="qc-cefr" className="block text-xs font-semibold leading-5" style={{ color: 'var(--text-secondary)' }}>
                 Level CEFR
               </label>
               <select
                 id="qc-cefr"
                 value={qcCefr}
                 onChange={(e) => setQcCefr(e.target.value as CefrLevel)}
-                className="w-full rounded-xl px-3 py-2.5 text-base sm:text-sm"
+                className="w-full min-h-11 sm:min-h-10 rounded-xl px-3 py-2 text-base sm:text-sm"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   border: '1px solid var(--border-strong)',
@@ -688,15 +701,15 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
               </select>
             </div>
 
-            <div className="space-y-1.5">
-              <label htmlFor="qc-pos" className="block text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="qc-pos" className="block text-xs font-semibold leading-5" style={{ color: 'var(--text-secondary)' }}>
                 Kelas Kata
               </label>
               <select
                 id="qc-pos"
                 value={qcPos}
                 onChange={(e) => setQcPos(e.target.value)}
-                className="w-full rounded-xl px-3 py-2.5 text-base sm:text-sm"
+                className="w-full min-h-11 sm:min-h-10 rounded-xl px-3 py-2 text-base sm:text-sm"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   border: '1px solid var(--border-strong)',
@@ -713,8 +726,8 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="space-y-1.5">
-              <label htmlFor="qc-def" className="block text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="qc-def" className="block text-xs font-semibold leading-5" style={{ color: 'var(--text-secondary)' }}>
                 Definisi English (opsional)
               </label>
               <input
@@ -723,7 +736,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                 value={qcDefinition}
                 onChange={(e) => setQcDefinition(e.target.value)}
                 placeholder="to learn informally through practice"
-                className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm"
+                className="w-full min-h-11 sm:min-h-10 rounded-xl px-3.5 py-2 text-base sm:text-sm"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   border: '1px solid var(--border-strong)',
@@ -732,8 +745,8 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label htmlFor="qc-ipa" className="block text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="qc-ipa" className="block text-xs font-semibold leading-5" style={{ color: 'var(--text-secondary)' }}>
                 Fonetik IPA (opsional)
               </label>
               <input
@@ -742,7 +755,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                 value={qcIpa}
                 onChange={(e) => setQcIpa(e.target.value)}
                 placeholder="/pɪk ʌp/"
-                className="w-full rounded-xl px-3.5 py-2.5 font-mono-code text-base sm:text-sm"
+                className="w-full min-h-11 sm:min-h-10 rounded-xl px-3.5 py-2 font-mono-code text-base sm:text-sm"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   border: '1px solid var(--border-strong)',
@@ -751,8 +764,8 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label htmlFor="qc-notes" className="block text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="qc-notes" className="block text-xs font-semibold leading-5" style={{ color: 'var(--text-secondary)' }}>
                 Catatan / Sumber (opsional)
               </label>
               <input
@@ -761,7 +774,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
                 value={qcNotes}
                 onChange={(e) => setQcNotes(e.target.value)}
                 placeholder="Podcast atau bacaan"
-                className="w-full rounded-xl px-3.5 py-2.5 text-base sm:text-sm"
+                className="w-full min-h-11 sm:min-h-10 rounded-xl px-3.5 py-2 text-base sm:text-sm"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   border: '1px solid var(--border-strong)',
@@ -773,7 +786,7 @@ export function AddImportView({ decks, onImportCards, onNotify }: AddImportViewP
 
           <button
             type="submit"
-            className="flex min-h-11 w-full sm:w-auto items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold transition-opacity hover:opacity-95"
+            className="flex min-h-11 w-full sm:w-auto sm:self-start items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold transition-opacity hover:opacity-95"
             style={{
               backgroundColor: 'var(--accent-solid)',
               color: 'var(--text-on-accent)',

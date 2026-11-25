@@ -6,9 +6,11 @@ import type {
   ElevenLabsSettings,
   LearningPhaseId,
   NavTab,
+  SettingsSectionId,
   SpeechAccent,
   SpeechRate,
   StudyMode,
+  ThemePreference,
   TtsProvider,
   VocabCard,
 } from './types';
@@ -39,8 +41,6 @@ import {
 } from './speech/elevenlabs';
 import { AppHeader } from './components/AppHeader';
 import { TodayView } from './components/TodayView';
-import { DecksView } from './components/DecksView';
-import { AddImportView } from './components/AddImportView';
 import { ProgressView } from './components/ProgressView';
 import { SettingsView } from './components/SettingsView';
 import { ReviewSession } from './components/ReviewSession';
@@ -50,6 +50,7 @@ import { Toast, type ToastMessage } from './components/Toast';
 export default function App() {
   const [state, setState] = useState<AppState>(() => loadAppState());
   const [activeTab, setActiveTab] = useState<NavTab>('today');
+  const [settingsSection, setSettingsSection] = useState<SettingsSectionId>('learning');
   const [inReviewSession, setInReviewSession] = useState(false);
   const [sessionInitialQueue, setSessionInitialQueue] = useState<VocabCard[]>([]);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
@@ -152,8 +153,6 @@ export default function App() {
   useEffect(() => {
     const tabTitles: Record<NavTab, string> = {
       today: 'Hari Ini',
-      decks: 'Deck',
-      add: 'Tambah & Import',
       progress: 'Progres',
       settings: 'Setelan',
     };
@@ -205,14 +204,19 @@ export default function App() {
     [allCards, state.progress, state.dailyActivity]
   );
 
-  const handleToggleTheme = () => {
+  const handleChangeTheme = (theme: ThemePreference) => {
     setState((prev) => ({
       ...prev,
       settings: {
         ...prev.settings,
-        theme: isDark ? 'light' : 'dark',
+        theme,
       },
     }));
+  };
+
+  const handleOpenSettingsSection = (section: SettingsSectionId) => {
+    setSettingsSection(section);
+    setActiveTab('settings');
   };
 
   const handleChangePhase = (phaseId: LearningPhaseId) => {
@@ -467,17 +471,13 @@ export default function App() {
         activeTab={activeTab}
         onSelectTab={setActiveTab}
         streak={stats.currentStreak}
-        isDark={isDark}
-        onToggleTheme={handleToggleTheme}
         dueBadgeCount={queueInfo.totalCount}
-        accent={state.settings.accent}
-        onChangeAccent={handleChangeAccent}
       />
 
       <main
         id="main-content"
         tabIndex={-1}
-        className="mx-auto w-full max-w-4xl flex-1 px-4 pt-6 pb-24 sm:px-6 md:pt-8 md:pb-12"
+        className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-24 sm:px-6 md:pt-8 md:pb-12"
       >
         {activeTab === 'today' && (
           <TodayView
@@ -491,32 +491,7 @@ export default function App() {
             onStartReview={handleStartReview}
             onAddExtraCards={handleAddExtraFromToday}
             onChangeStudyMode={handleChangeStudyMode}
-            onGoToDecks={() => setActiveTab('decks')}
-          />
-        )}
-
-        {activeTab === 'decks' && (
-          <DecksView
-            decks={allDecks}
-            allCards={allCards}
-            progress={state.progress}
-            activeDeckIds={state.settings.activeDeckIds}
-            phaseId={state.settings.phaseId}
-            dailyNewLimit={state.settings.dailyNewLimit}
-            accent={state.settings.accent}
-            speechRate={state.settings.speechRate}
-            ttsProvider={state.settings.ttsProvider}
-            elevenLabs={state.settings.elevenLabs}
-            onToggleDeck={handleToggleDeck}
-            onChangeDailyNewLimit={handleChangeDailyNewLimit}
-          />
-        )}
-
-        {activeTab === 'add' && (
-          <AddImportView
-            decks={allDecks}
-            onImportCards={handleImportCards}
-            onNotify={notify}
+            onGoToDecks={() => handleOpenSettingsSection('decks')}
           />
         )}
 
@@ -532,17 +507,29 @@ export default function App() {
 
         {activeTab === 'settings' && (
           <SettingsView
+            activeSection={settingsSection}
+            onSelectSection={setSettingsSection}
             phaseId={state.settings.phaseId}
+            dailyNewLimit={state.settings.dailyNewLimit}
+            theme={state.settings.theme}
             accent={state.settings.accent}
             speechRate={state.settings.speechRate}
             ttsProvider={state.settings.ttsProvider}
             elevenLabs={state.settings.elevenLabs}
             serverStatus={serverTtsStatus}
+            decks={allDecks}
+            allCards={allCards}
+            progress={state.progress}
+            activeDeckIds={state.settings.activeDeckIds}
             onChangePhase={handleChangePhase}
+            onChangeDailyNewLimit={handleChangeDailyNewLimit}
+            onChangeTheme={handleChangeTheme}
             onChangeAccent={handleChangeAccent}
             onChangeSpeechRate={handleChangeSpeechRate}
             onChangeProvider={handleChangeTtsProvider}
             onChangeElevenLabs={handleChangeElevenLabs}
+            onToggleDeck={handleToggleDeck}
+            onImportCards={handleImportCards}
             onNotify={notify}
           />
         )}

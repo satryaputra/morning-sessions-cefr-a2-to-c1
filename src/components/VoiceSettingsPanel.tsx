@@ -124,15 +124,15 @@ export function VoiceSettingsPanel({
   };
 
   return (
-    <div className="space-y-5">
-      <fieldset className="border-0 p-0 m-0">
+    <div className="flex flex-col gap-6" data-voice-panel={idPrefix}>
+      <fieldset className="m-0 min-w-0 border-0 p-0" data-voice-group="accent">
         <legend
-          className="mb-2 block text-xs font-semibold"
+          className="mb-2 block w-full p-0 text-xs font-semibold leading-5"
           style={{ color: 'var(--text-secondary)' }}
         >
           Aksen Pelafalan
         </legend>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" data-voice-control="accent">
           {ACCENT_OPTIONS.map((option) => {
             const selected = accent === option.value;
             const inputId = `${idPrefix}-accent-${option.value}`;
@@ -174,14 +174,14 @@ export function VoiceSettingsPanel({
         </div>
       </fieldset>
 
-      <fieldset className="border-0 p-0 m-0">
+      <fieldset className="m-0 min-w-0 border-0 p-0" data-voice-group="rate">
         <legend
-          className="mb-2 block text-xs font-semibold"
+          className="mb-2 block w-full p-0 text-xs font-semibold leading-5"
           style={{ color: 'var(--text-secondary)' }}
         >
           Kecepatan Audio
         </legend>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" data-voice-control="rate">
           {RATE_OPTIONS.map((option) => {
             const selected = speechRate === option.value;
             const inputId = `${idPrefix}-rate-${option.value}`;
@@ -223,14 +223,14 @@ export function VoiceSettingsPanel({
         </div>
       </fieldset>
 
-      <fieldset className="border-0 p-0 m-0">
+      <fieldset className="m-0 min-w-0 border-0 p-0" data-voice-group="provider">
         <legend
-          className="mb-2 block text-xs font-semibold"
+          className="mb-2 block w-full p-0 text-xs font-semibold leading-5"
           style={{ color: 'var(--text-secondary)' }}
         >
           Mesin Suara
         </legend>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" data-voice-control="provider">
           <div className="relative">
             <input
               type="radio"
@@ -338,23 +338,37 @@ export function VoiceSettingsPanel({
       </fieldset>
 
       {effectiveProvider === 'elevenlabs' && (
-        <div className="space-y-5 animate-card-reveal">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="space-y-2">
-              <label
-                htmlFor={`${idPrefix}-us-voice`}
-                className="block text-xs font-semibold"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                Suara American (US){accent === 'en-US' ? ' • Aktif' : ''}
-              </label>
+        <div className="flex flex-col gap-6 animate-card-reveal" data-voice-elevenlabs>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2" data-voice-group="us-voice">
+              <div className="flex min-h-5 items-center justify-between gap-2" data-voice-label="us-voice">
+                <label
+                  htmlFor={`${idPrefix}-us-voice`}
+                  className="text-xs font-semibold leading-5"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  Suara American (US)
+                </label>
+                {accent === 'en-US' && (
+                  <span
+                    className="rounded-md px-1.5 py-0.5 text-[11px] font-semibold leading-none"
+                    style={{
+                      backgroundColor: 'var(--accent-soft)',
+                      color: 'var(--accent-text)',
+                    }}
+                  >
+                    Aktif
+                  </span>
+                )}
+              </div>
               <select
                 id={`${idPrefix}-us-voice`}
                 value={elevenLabs.usVoiceId}
                 onChange={(e) =>
                   onChangeElevenLabs({ ...elevenLabs, usVoiceId: e.target.value })
                 }
-                className="w-full min-h-11 sm:min-h-9 rounded-xl px-3 py-2 text-base sm:text-xs font-medium"
+                data-voice-control="us-voice"
+                className="w-full min-h-11 sm:min-h-10 rounded-xl px-3.5 py-2 text-base sm:text-xs font-medium"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   border: '1px solid var(--border-strong)',
@@ -369,21 +383,35 @@ export function VoiceSettingsPanel({
               </select>
             </div>
 
-            <div className="space-y-2">
-              <label
-                htmlFor={`${idPrefix}-uk-voice`}
-                className="block text-xs font-semibold"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                Suara British (UK){accent === 'en-GB' ? ' • Aktif' : ''}
-              </label>
+            <div className="flex flex-col gap-2" data-voice-group="uk-voice">
+              <div className="flex min-h-5 items-center justify-between gap-2" data-voice-label="uk-voice">
+                <label
+                  htmlFor={`${idPrefix}-uk-voice`}
+                  className="text-xs font-semibold leading-5"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  Suara British (UK)
+                </label>
+                {accent === 'en-GB' && (
+                  <span
+                    className="rounded-md px-1.5 py-0.5 text-[11px] font-semibold leading-none"
+                    style={{
+                      backgroundColor: 'var(--accent-soft)',
+                      color: 'var(--accent-text)',
+                    }}
+                  >
+                    Aktif
+                  </span>
+                )}
+              </div>
               <select
                 id={`${idPrefix}-uk-voice`}
                 value={elevenLabs.ukVoiceId}
                 onChange={(e) =>
                   onChangeElevenLabs({ ...elevenLabs, ukVoiceId: e.target.value })
                 }
-                className="w-full min-h-11 sm:min-h-9 rounded-xl px-3 py-2 text-base sm:text-xs font-medium"
+                data-voice-control="uk-voice"
+                className="w-full min-h-11 sm:min-h-10 rounded-xl px-3.5 py-2 text-base sm:text-xs font-medium"
                 style={{
                   backgroundColor: 'var(--bg-subtle)',
                   border: '1px solid var(--border-strong)',
@@ -399,43 +427,55 @@ export function VoiceSettingsPanel({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <span className="block text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+          <fieldset className="m-0 min-w-0 border-0 p-0" data-voice-group="model">
+            <legend
+              className="mb-2 block w-full p-0 text-xs font-semibold leading-5"
+              style={{ color: 'var(--text-secondary)' }}
+            >
               Model Suara ElevenLabs
-            </span>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            </legend>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" data-voice-control="model">
               {ELEVENLABS_MODELS.map((model) => {
                 const selected = elevenLabs.modelId === model.id;
+                const inputId = `${idPrefix}-model-${model.id}`;
                 return (
-                  <button
-                    key={model.id}
-                    type="button"
-                    aria-pressed={selected}
-                    onClick={() =>
-                      onChangeElevenLabs({
-                        ...elevenLabs,
-                        modelId: model.id as ElevenLabsModelId,
-                      })
-                    }
-                    className="min-h-11 rounded-xl p-4 text-left transition-colors"
-                    style={{
-                      backgroundColor: selected ? 'var(--accent-soft)' : 'var(--bg-subtle)',
-                      border: selected
-                        ? '1.5px solid var(--accent-solid)'
-                        : '1.5px solid transparent',
-                    }}
-                  >
-                    <div className="text-xs font-bold">{model.label}</div>
-                    <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                      {model.desc}
-                    </p>
-                  </button>
+                  <div key={model.id} className="relative">
+                    <input
+                      id={inputId}
+                      type="radio"
+                      name={`${idPrefix}-model`}
+                      value={model.id}
+                      checked={selected}
+                      onChange={() =>
+                        onChangeElevenLabs({
+                          ...elevenLabs,
+                          modelId: model.id as ElevenLabsModelId,
+                        })
+                      }
+                      className="sr-only peer"
+                    />
+                    <label
+                      htmlFor={inputId}
+                      className="block h-full cursor-pointer rounded-xl p-4 text-left transition-colors peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--accent-solid)]"
+                      style={{
+                        backgroundColor: selected ? 'var(--accent-soft)' : 'var(--bg-subtle)',
+                        border: selected
+                          ? '1.5px solid var(--accent-solid)'
+                          : '1.5px solid transparent',
+                      }}
+                    >
+                      <div className="text-xs font-bold">{model.label}</div>
+                      <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                        {model.desc}
+                      </p>
+                    </label>
+                  </div>
                 );
               })}
             </div>
-          </div>
+          </fieldset>
 
-          <details className="rounded-xl px-4 py-3" style={{ backgroundColor: 'var(--bg-subtle)' }}>
+          <details className="rounded-xl px-4 py-3" style={{ backgroundColor: 'var(--bg-subtle)' }} data-voice-group="proxy">
             <summary
               className="flex min-h-11 sm:min-h-9 cursor-pointer list-none items-center justify-between text-xs font-semibold"
               style={{ color: 'var(--text-secondary)' }}
@@ -443,10 +483,10 @@ export function VoiceSettingsPanel({
               <span>Opsi Lanjutan (Custom Proxy Endpoint)</span>
               <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
             </summary>
-            <div className="mt-3 space-y-2">
+            <div className="mt-3 flex flex-col gap-2">
               <label
                 htmlFor={`${idPrefix}-custom-proxy`}
-                className="block text-xs"
+                className="block text-xs leading-relaxed"
                 style={{ color: 'var(--text-muted)' }}
               >
                 Kosongkan untuk memakai proxy bawaan (<code className="font-mono-code">/api/tts/elevenlabs</code>). Isi jika Anda men-deploy proxy sendiri.
@@ -459,7 +499,7 @@ export function VoiceSettingsPanel({
                   onChangeElevenLabs({ ...elevenLabs, customProxyUrl: e.target.value })
                 }
                 placeholder="https://proxy-anda.workers.dev/api/tts/elevenlabs"
-                className="w-full min-h-11 sm:min-h-9 rounded-xl px-3 py-2 font-mono-code text-base sm:text-xs"
+                className="w-full min-h-11 sm:min-h-10 rounded-xl px-3.5 py-2 font-mono-code text-base sm:text-xs"
                 style={{
                   backgroundColor: 'var(--bg-surface)',
                   border: '1px solid var(--border-strong)',
@@ -472,8 +512,9 @@ export function VoiceSettingsPanel({
       )}
 
       <div
-        className="space-y-3 pt-5"
+        className="flex flex-col gap-3 pt-6"
         style={{ borderTop: '1px solid var(--border-subtle)' }}
+        data-voice-group="actions"
       >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <button

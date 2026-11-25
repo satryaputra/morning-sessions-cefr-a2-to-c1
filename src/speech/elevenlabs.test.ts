@@ -13,6 +13,7 @@ import {
   DEFAULT_UK_VOICE_ID,
   DEFAULT_US_VOICE_ID,
   ELEVENLABS_SECRET_STORAGE_KEY,
+  ELEVENLABS_VOICES,
   ElevenLabsTtsError,
   getDefaultElevenLabsSettings,
   getVoiceIdForAccent,
@@ -21,7 +22,12 @@ import {
   saveElevenLabsApiKey,
   synthesizeElevenLabsAudio,
 } from './elevenlabs';
-import { LEARNING_PHASES, STARTER_CARDS, STARTER_DECKS } from '../data';
+import {
+  createPersonalDeck,
+  LEARNING_PHASES,
+  STARTER_CARDS,
+  STARTER_DECKS,
+} from '../data';
 import { serializeBackup } from '../importExport/backup';
 import { createInitialAppState, type StorageLike } from '../storage/state';
 import { speakEnglish } from './tts';
@@ -335,8 +341,8 @@ describe('Default US Accent, ElevenLabs Configuration & Brand/Arrow-Free Copy', 
     ).toBe(true);
   });
 
-  it('contains zero arrow symbols and zero product/publisher branding in visible curriculum data', () => {
-    const forbidden = /→|PagiKata|\bBBC\b|\bOxford\b/i;
+  it('contains zero bullet/dot/arrow symbols and zero product/publisher branding in visible curriculum and voice data', () => {
+    const forbidden = /→|•|·|PagiKata|\bBBC\b|\bOxford\b/i;
 
     for (const phase of LEARNING_PHASES) {
       expect(phase.title).not.toMatch(forbidden);
@@ -346,7 +352,7 @@ describe('Default US Accent, ElevenLabs Configuration & Brand/Arrow-Free Copy', 
       expect(phase.description).not.toMatch(forbidden);
     }
 
-    for (const deck of STARTER_DECKS) {
+    for (const deck of [...STARTER_DECKS, createPersonalDeck()]) {
       expect(deck.title).not.toMatch(forbidden);
       expect(deck.subtitle).not.toMatch(forbidden);
       expect(deck.description).not.toMatch(forbidden);
@@ -356,6 +362,11 @@ describe('Default US Accent, ElevenLabs Configuration & Brand/Arrow-Free Copy', 
     for (const card of STARTER_CARDS) {
       expect(card.sentence).not.toMatch(forbidden);
       expect(card.notes).not.toMatch(forbidden);
+    }
+
+    for (const voice of ELEVENLABS_VOICES) {
+      expect(voice.name).not.toMatch(forbidden);
+      expect(voice.styleLabel).not.toMatch(forbidden);
     }
   });
 });

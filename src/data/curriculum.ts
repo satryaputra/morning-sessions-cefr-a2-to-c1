@@ -64,7 +64,7 @@ export const STARTER_DECKS: DeckDefinition[] = [
   {
     id: STARTER_DECK_IDS.FONDASI,
     title: 'Kosakata Fondasi',
-    subtitle: 'A2–B1 • Komunikasi Harian',
+    subtitle: 'Komunikasi Harian',
     description:
       'Frasa, collocation, dan kosakata esensial untuk percakapan sehari-hari, perjalanan, serta rutinitas kerja dasar.',
     cefrRange: 'A2–B1',
@@ -75,7 +75,7 @@ export const STARTER_DECKS: DeckDefinition[] = [
   {
     id: STARTER_DECK_IDS.MENENGAH,
     title: 'Kosakata Menengah',
-    subtitle: 'B1–B2 • Kerja & Diskusi',
+    subtitle: 'Kerja & Diskusi',
     description:
       'Phrasal verbs produktif, collocation dunia kerja, cara menyampaikan opini, dan kosakata diskusi tingkat menengah.',
     cefrRange: 'B1–B2',
@@ -86,7 +86,7 @@ export const STARTER_DECKS: DeckDefinition[] = [
   {
     id: STARTER_DECK_IDS.BBC_IDIOMS,
     title: 'Idiom & Percakapan',
-    subtitle: 'B1–B2 • Ungkapan Natural',
+    subtitle: 'Ungkapan Natural',
     description:
       'Idiom dan ekspresi percakapan autentik agar telinga akrab dengan bahasa Inggris alami.',
     cefrRange: 'B1–B2',
@@ -97,7 +97,7 @@ export const STARTER_DECKS: DeckDefinition[] = [
   {
     id: STARTER_DECK_IDS.OXFORD_C1,
     title: 'Kosakata Mahir C1',
-    subtitle: 'B2–C1 • Nuansa & Argumen',
+    subtitle: 'Nuansa & Argumen',
     description:
       'Kosakata bernuansa tinggi, ungkapan akademis, dan collocation presisi untuk menulis dan berargumen setara C1.',
     cefrRange: 'B2–C1',
@@ -116,7 +116,7 @@ export function createPersonalDeck(): DeckDefinition {
       'Kalimat pilihan dari bacaan, podcast, atau daftar kosakata yang Anda tambahkan sendiri.',
     cefrRange: 'A2–C1',
     recommendedPhases: ['phase-1', 'phase-2', 'phase-3', 'phase-4'],
-    phaseLabel: 'Opsional • Kustom',
+    phaseLabel: 'Kustom',
     isStarter: false,
   };
 }
