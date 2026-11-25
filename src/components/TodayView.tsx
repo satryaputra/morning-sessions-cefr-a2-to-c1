@@ -1,13 +1,10 @@
 import { Check, ChevronRight, Headphones, PenLine } from 'lucide-react';
-import type { DeckDefinition, LearningPhaseId, SpeechAccent, StudyStage } from '../types';
+import type { DeckDefinition, StudyStage } from '../types';
 import type { DailyStudyView } from '../srs/dailyStudy';
-import { LEARNING_PHASES } from '../data';
 import './study.css';
 
 interface TodayViewProps {
   study: DailyStudyView;
-  phaseId: LearningPhaseId;
-  accent: SpeechAccent;
   activeDecks: DeckDefinition[];
   onStart: () => void;
   onStartStage: (stage: StudyStage) => void;
@@ -23,20 +20,20 @@ const dateFormat = new Intl.DateTimeFormat('id-ID', {
 
 export function TodayView({
   study,
-  phaseId,
-  accent,
   activeDecks,
   onStart,
   onStartStage,
   onAddExtra,
   onGoToDecks,
 }: TodayViewProps) {
-  const phase = LEARNING_PHASES.find((item) => item.id === phaseId) ?? LEARNING_PHASES[0];
   const listeningTotal = study.listeningCards.length;
   const clozeTotal = study.clozeCards.length;
   const needsListening = listeningTotal > 0 && !study.listeningFinished;
   const needsCloze = clozeTotal > 0 && !study.clozeFinished;
   const noDecks = activeDecks.length === 0 && !needsCloze;
+  const agendaNote = study.dueCount > 0
+    ? `${study.dueCount} kata lama menunggu di akhir Tebak Kata.`
+    : (!needsListening ? 'Progres tersimpan jika Anda kembali nanti.' : '');
   const nextAction = needsListening
     ? (study.listenedCount ? 'Lanjutkan Listening' : 'Mulai Listening')
     : (study.answeredCount ? 'Lanjutkan Tebak Kata' : (listeningTotal ? 'Lanjut ke Tebak Kata' : 'Mulai Tebak Kata'));
@@ -75,11 +72,6 @@ export function TodayView({
         <div>
           <p className="study-date">{dateFormat.format(new Date())}</p>
           <h1 id="today-title" className="study-title" tabIndex={-1}>Latihan hari ini</h1>
-        </div>
-        <div className="study-context">
-          <span>{phase.title} ({phase.cefrTarget})</span>
-          <span>{activeDecks.length} deck aktif</span>
-          <span>Aksen {accent === 'en-US' ? 'US' : 'UK'}</span>
         </div>
       </header>
 
@@ -141,13 +133,7 @@ export function TodayView({
             ) : needsCloze ? (
               <>
                 <button type="button" className="study-button study-primary" onClick={onStart}>{nextAction}</button>
-                <p>
-                  {study.dueCount > 0
-                    ? `${study.dueCount} kata lama menunggu di akhir Tebak Kata.`
-                    : (needsListening
-                      ? 'Tebak Kata dibuka setelah Listening selesai.'
-                      : 'Progres tersimpan jika Anda kembali nanti.')}
-                </p>
+                {agendaNote && <p>{agendaNote}</p>}
               </>
             ) : (
               <>

@@ -27,7 +27,7 @@
 .study-title {
   color: var(--text-primary);
   font: 500 clamp(2.25rem, 5vw, 3.25rem)/1.04 var(--font-serif);
-  margin-block-start: 0.25rem;
+  margin-block-start: 0.75rem;
   text-wrap: balance;
   overflow-wrap: anywhere;
 }
@@ -35,14 +35,6 @@
 .study-home-heading > div,
 .study-session-heading > div {
   min-inline-size: 0;
-}
-
-.study-context {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem 1rem;
-  color: var(--text-secondary);
-  font-size: 0.8125rem;
 }
 
 .study-sheet {
@@ -183,15 +175,14 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 0.75rem 1rem;
-  margin-block-start: 1rem;
-  padding-block-start: 1rem;
-  border-block-start: 1px solid var(--border-subtle);
+  margin-block-start: 1.25rem;
 }
 
 .study-agenda-action p {
   flex: 1 1 15rem;
+  margin-inline-end: auto;
   order: -1;
 }
 
@@ -316,29 +307,51 @@
 }
 
 .study-session-header {
-  background: var(--bg-surface);
-  border-block-end: 1px solid var(--border-subtle);
-}
-
-.study-session-bar,
-.study-session {
   inline-size: min(100%, 49rem);
   margin-inline: auto;
+  padding-block-start: 1.25rem;
   padding-inline: clamp(12px, 4vw, 1.5rem);
 }
 
 .study-session-bar {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
+  align-items: center;
   gap: 0.5rem;
-  padding-block: 0.375rem;
+  inline-size: 100%;
+  margin-inline: auto;
+  padding: 0.375rem 0.5rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-card);
 }
 
 .study-session {
+  inline-size: min(100%, 49rem);
+  margin-inline: auto;
+  padding-inline: clamp(12px, 4vw, 1.5rem);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 1.25rem;
-  padding-block: clamp(1rem, 4vw, 2.5rem) 2.5rem;
+  padding-block: 2rem 2.5rem;
+}
+
+@media (min-width: 40rem) {
+  .study-session-header {
+    padding-block-start: 1.75rem;
+  }
+
+  .study-session {
+    padding-block-start: 2.5rem;
+  }
+}
+
+@media (min-width: 48rem) {
+  .study-session {
+    padding-block-start: 3.25rem;
+  }
 }
 
 .study-session-progress {
@@ -364,7 +377,7 @@
   justify-content: space-between;
   gap: 0.25rem 0.75rem;
   inline-size: 100%;
-  margin-block-end: -0.5rem;
+  margin-block-end: -0.25rem;
 }
 
 .study-task h2 {
@@ -419,14 +432,38 @@
   font-weight: 600;
 }
 
-.study-hint {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
+.study-hints {
+  display: grid;
+  gap: 0.75rem;
 }
 
-.study-hint-meaning {
-  display: block;
-  margin-block-start: 0.25rem;
+.study-answer > h3 + .study-hints,
+.study-sentence + .study-hints,
+#study-question + .study-hints {
+  padding-block-start: 0.75rem;
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.study-hint-item {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.study-hint-item + .study-hint-item {
+  padding-block-start: 0.625rem;
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.study-hint-label {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.study-hint {
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  line-height: 1.5;
 }
 
 .study-answer {
@@ -729,8 +766,7 @@
   }
 
   .study-agenda-action {
-    margin-block-start: 0.75rem;
-    padding-block-start: 0.75rem;
+    margin-block-start: 1rem;
   }
 
   .study-agenda-action .study-button,
@@ -820,6 +856,24 @@
 
 @container (min-width: 14rem) {
   .progress-mastery-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.settings-tablist-wrap {
+  container-type: inline-size;
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.settings-tab-group-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+}
+
+@container (min-width: 15rem) {
+  .settings-tab-group-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

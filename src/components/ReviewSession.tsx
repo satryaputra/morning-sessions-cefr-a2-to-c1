@@ -248,6 +248,13 @@ interface StudyCardProps {
   onNext: () => void;
 }
 
+interface StudyHintItem {
+  id: 'definition' | 'sentence';
+  label: string;
+  text: string;
+  lang: 'en' | 'id';
+}
+
 function StudyCard({
   card,
   cardNumber,
@@ -270,7 +277,7 @@ function StudyCard({
 }: StudyCardProps) {
   const startRevealed = readOnly || hasCompletedCard;
   const [revealed, setRevealed] = useState(startRevealed);
-  const [hint, setHint] = useState<'unused' | 'shown' | 'hidden'>('unused');
+  const [hintLevel, setHintLevel] = useState<0 | 1 | 2>(0);
   const [audio, setAudio] = useState<'idle' | 'loading' | 'playing' | 'error'>('idle');
   const [audioSource, setAudioSource] = useState<'sentence' | 'word' | null>(null);
   const [fallback, setFallback] = useState(false);
@@ -381,7 +388,51 @@ function StudyCard({
   const wordAudio = audioSource === 'word' ? audio : 'idle';
 
   const metadata = isDue ? 'Review terjadwal' : (isPractice ? 'Latihan ulang' : deckName);
-  const hintMeaning = settings.showIndonesianHint ? meaning ?? safeDefinition : safeDefinition ?? meaning;
+  const availableHints: StudyHintItem[] = [];
+  if (safeDefinition) {
+    availableHints.push({
+      id: 'definition',
+      label: 'Petunjuk 1 (Deskripsi Inggris)',
+      text: safeDefinition,
+      lang: 'en',
+    });
+  }
+  if (activeSentenceTranslation) {
+    availableHints.push({
+      id: 'sentence',
+      label: safeDefinition ? 'Petunjuk 2 (Arti kalimat)' : 'Petunjuk (Arti kalimat)',
+      text: activeSentenceTranslation,
+      lang: 'id',
+    });
+  }
+
+  const visibleHintCount = !revealed ? Math.min(hintLevel, availableHints.length) : 0;
+  const visibleHints = availableHints.slice(0, visibleHintCount);
+
+  const handleToggleHint = () => {
+    if (availableHints.length === 0) return;
+    setHintLevel((prev) => (prev >= availableHints.length ? 0 : ((prev + 1) as 0 | 1 | 2)));
+  };
+
+  const hintButtonLabel =
+    hintLevel === 0
+      ? 'Minta petunjuk'
+      : hintLevel === 1 && availableHints.length > 1
+        ? 'Petunjuk 2: Arti kalimat'
+        : 'Sembunyikan petunjuk';
+
+  const hintToggleButton = !revealed && availableHints.length > 0 ? (
+    <button
+      type="button"
+      className="study-button study-secondary"
+      aria-expanded={hintLevel > 0}
+      aria-controls="study-hint"
+      onClick={handleToggleHint}
+    >
+      <span>{hintButtonLabel}</span>
+    </button>
+  ) : null;
+
   const audioStatus = audio === 'error'
     ? 'Audio belum bisa diputar. Coba lagi atau periksa setelan suara.'
     : (fallback ? 'Menggunakan suara browser.' : '');
@@ -399,10 +450,15 @@ function StudyCard({
           <h2 id="study-prompt" ref={promptRef} tabIndex={-1}>
             {showMaskedTranscript ? 'Dengarkan dan tebak kata' : 'Dengarkan kalimat'}
           </h2>
-          {(revealed || showMaskedTranscript) && (
+          {(revealed || showMaskedTranscript || visibleHintCount > 0) ? (
             <div className="study-answer">
-              <h3 ref={detailsRef} tabIndex={-1}>Transkrip</h3>
-              <Sentence parsed={listeningTranscript} reveal={revealed} />
+              {(revealed || showMaskedTranscript) && (
+                <>
+                  <h3 ref={detailsRef} tabIndex={-1}>Transkrip</h3>
+                  <Sentence parsed={listeningTranscript} reveal={revealed} />
+                </>
+              )}
+              {!revealed && availableHints.length > 0 && <HintBox hints={visibleHints} />}
               {revealed && (
                 <>
                   <WordDetails
@@ -421,6 +477,8 @@ function StudyCard({
                 </>
               )}
             </div>
+          ) : (
+            availableHints.length > 0 && <HintBox hints={visibleHints} />
           )}
           <div className="study-audio">
             <button
@@ -438,6 +496,7 @@ function StudyCard({
                 <span>{showMaskedTranscript ? 'Lihat kata' : 'Buka transkrip'}</span>
               </button>
             )}
+            {hintToggleButton}
           </div>
           {audioStatus && <p className="study-audio-status" role="status">{audioStatus}</p>}
         </>
@@ -453,28 +512,13 @@ function StudyCard({
                 {sentences.cloze.hasMatch
                   ? <Sentence id="study-question" parsed={sentences.cloze} reveal={false} />
                   : <p id="study-question">{meaning || safeDefinition || 'Gunakan petunjuk untuk mengingat kata target.'}</p>}
-                <div id="study-hint" role="status" hidden={hint !== 'shown'}>
-                  {hint === 'shown' && (
-                    <p className="study-hint">
-                      Huruf awal <strong lang="en">{[...target][0]}</strong>
-                      {hintMeaning && <> <span className="study-hint-meaning">{hintMeaning}</span></>}
-                    </p>
-                  )}
-                </div>
+                {availableHints.length > 0 && <HintBox hints={visibleHints} />}
               </div>
               <div className="study-task-actions">
                 <button type="button" className="study-button study-secondary" onClick={handleReveal}>
                   <span>Lihat jawaban</span>
                 </button>
-                <button
-                  type="button"
-                  className="study-button study-secondary"
-                  aria-expanded={hint === 'shown'}
-                  aria-controls="study-hint"
-                  onClick={() => setHint(hint === 'shown' ? 'hidden' : 'shown')}
-                >
-                  <span>{hint === 'shown' ? 'Sembunyikan petunjuk' : 'Minta petunjuk'}</span>
-                </button>
+                {hintToggleButton}
               </div>
             </>
           ) : (
@@ -607,6 +651,19 @@ function RatingChoices({
         <p className="study-rating-note">{lockedNote}</p>
       )}
     </fieldset>
+  );
+}
+
+function HintBox({ hints }: { hints: StudyHintItem[] }) {
+  return (
+    <div id="study-hint" role="status" className="study-hints" hidden={hints.length === 0}>
+      {hints.map((item) => (
+        <div key={item.id} className="study-hint-item">
+          <span className="study-hint-label">{item.label}</span>
+          <p className="study-hint" lang={item.lang}>{item.text}</p>
+        </div>
+      ))}
+    </div>
   );
 }
 

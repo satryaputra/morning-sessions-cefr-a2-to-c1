@@ -6,7 +6,7 @@ Web app (PWA) latihan kosakata bahasa Inggris berbasis **Spaced Repetition Syste
 
 - **Dua Sesi Berurutan di Hari Ini**:
   1. **Listening**: Dengarkan audio kalimat (dukungan aksen US/UK melalui suara browser atau ElevenLabs dengan cache lokal). Di Mode Fondasi transkrip rumpang langsung terlihat, sedangkan di mode lain transkrip dibuka setelah menyimak. Setelah kata terbuka, tersedia arti, IPA, pemutar audio kata, dan terjemahan kalimat.
-  2. **Tebak Kata**: Melanjutkan kata dari sesi Listening dalam kalimat konteks yang berbeda tanpa mengetik jawaban, lalu diikuti kartu terjadwal yang sudah jatuh tempo. Gunakan **Minta petunjuk** untuk melihat huruf awal dan arti singkat, atau **Lihat jawaban** untuk membuka kata target.
+  2. **Tebak Kata**: Melanjutkan kata dari sesi Listening dalam kalimat konteks yang berbeda tanpa mengetik jawaban, lalu diikuti kartu terjadwal yang sudah jatuh tempo. Gunakan **Minta petunjuk** secara bertahap untuk melihat deskripsi bahasa Inggris maupun arti kalimat bahasa Indonesia, atau **Lihat jawaban** untuk membuka kata target.
 - **Penilaian Mandiri Tanpa Ketikan**:
   - Nilai diri di setiap kartu menggunakan empat tombol: **Baru** (`1`), **Susah** (`2`), **Biasa** (`3`), dan **Mudah** (`4`).
   - Kartu yang sudah dinilai dapat diubah nilainya selama sesi masih berlangsung (selama bukan kartu lama dengan data riwayat tidak lengkap).
@@ -20,8 +20,9 @@ Web app (PWA) latihan kosakata bahasa Inggris berbasis **Spaced Repetition Syste
 - **Setelan Terstruktur**:
   - **Preferensi**: *Belajar & Tampilan* (mode belajar, jatah kata baru harian 5/10/15, tema Terang/Gelap/Ikuti Sistem) dan *Aksen & Suara* (aksen US/UK, kecepatan bicara, pilihan suara browser atau ElevenLabs).
   - **Koleksi Kata**: *Deck Kosakata* untuk mengaktifkan deck dan *Tambah & Import* untuk membuat kartu kustom atau mengimpor CSV/TSV (termasuk kolom opsional `practiceSentence` dan `sentenceTranslationId`).
-- **Progres & Backup JSON**:
-  - Streak harian, kalender aktivitas 28 hari dengan rincian penilaian sesi Listening dan Tebak Kata per tanggal, status penguasaan kartu, progres per level CEFR (`A2` hingga `C1`), serta Export/Import Backup JSON.
+  - **Data**: *Backup & Reset* untuk Export/Import Backup JSON serta reset progres review.
+- **Progres Belajar**:
+  - Streak harian, kalender aktivitas 28 hari dengan rincian penilaian sesi Listening dan Tebak Kata per tanggal, status penguasaan kartu, dan progres per level CEFR (`A2` hingga `C1`).
 
 ## Cara Menjalankan
 

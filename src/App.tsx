@@ -503,13 +503,11 @@ export default function App() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-24 sm:px-6 md:pt-8 md:pb-12"
+        className="mx-auto w-full max-w-5xl flex-1 px-[clamp(12px,3vw,1.5rem)] pt-8 pb-28 sm:pt-10 md:pt-12 md:pb-12"
       >
         {activeTab === 'today' && (
           <TodayView
             study={study}
-            phaseId={state.settings.phaseId}
-            accent={state.settings.accent}
             activeDecks={activeDecks}
             onStart={() => handleStartStudy()}
             onStartStage={handleStartStage}
@@ -519,17 +517,12 @@ export default function App() {
         )}
 
         {activeTab === 'progress' && (
-          <ProgressView
-            state={state}
-            stats={stats}
-            onRestoreState={handleRestoreState}
-            onResetProgress={handleResetProgress}
-            onNotify={notify}
-          />
+          <ProgressView stats={stats} />
         )}
 
         {activeTab === 'settings' && (
           <SettingsView
+            state={state}
             activeSection={settingsSection}
             onSelectSection={setSettingsSection}
             phaseId={state.settings.phaseId}
@@ -553,6 +546,8 @@ export default function App() {
             onChangeElevenLabs={handleChangeElevenLabs}
             onToggleDeck={handleToggleDeck}
             onImportCards={handleImportCards}
+            onRestoreState={handleRestoreState}
+            onResetProgress={handleResetProgress}
             onNotify={notify}
           />
         )}

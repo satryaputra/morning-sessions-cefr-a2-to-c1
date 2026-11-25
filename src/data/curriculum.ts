@@ -12,7 +12,7 @@ export const DEFAULT_CUSTOM_DECK_ID = 'koleksi-pribadi';
 export const LEARNING_PHASES: LearningPhaseDefinition[] = [
   {
     id: 'phase-1',
-    monthsLabel: 'Petunjuk ID aktif',
+    monthsLabel: 'Transkrip tampil',
     title: 'Mode Fondasi',
     cefrTarget: 'A2–B1',
     curriculumLabel: 'Mode Fondasi',
@@ -23,7 +23,7 @@ export const LEARNING_PHASES: LearningPhaseDefinition[] = [
   },
   {
     id: 'phase-2',
-    monthsLabel: 'Petunjuk ID aktif',
+    monthsLabel: 'Audio murni',
     title: 'Mode Menengah',
     cefrTarget: 'B1–B2',
     curriculumLabel: 'Mode Menengah',
@@ -34,7 +34,7 @@ export const LEARNING_PHASES: LearningPhaseDefinition[] = [
   },
   {
     id: 'phase-3',
-    monthsLabel: 'Tanpa petunjuk ID',
+    monthsLabel: 'Audio murni',
     title: 'Mode Menengah Atas',
     cefrTarget: 'B2',
     curriculumLabel: 'Mode Menengah Atas',
@@ -49,7 +49,7 @@ export const LEARNING_PHASES: LearningPhaseDefinition[] = [
   },
   {
     id: 'phase-4',
-    monthsLabel: 'Tanpa petunjuk ID',
+    monthsLabel: 'Audio murni',
     title: 'Mode Mahir',
     cefrTarget: 'B2–C1',
     curriculumLabel: 'Mode Mahir',

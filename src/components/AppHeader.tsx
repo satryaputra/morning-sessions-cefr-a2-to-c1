@@ -22,18 +22,16 @@ export function AppHeader({
 }: AppHeaderProps) {
   return (
     <>
-      <header
-        className="sticky top-0 z-30 backdrop-blur-md"
-        style={{
-          backgroundColor: 'color-mix(in oklab, var(--bg-canvas) 88%, transparent)',
-          borderBottom: '1px solid var(--border-subtle)',
-        }}
-      >
-        <div className="mx-auto flex min-h-14 md:min-h-16 max-w-5xl items-center justify-end md:justify-between gap-2 px-4 py-2 sm:px-6">
+      <header className="relative pt-5 sm:pt-7 pb-1">
+        <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-end md:justify-between gap-2 px-[clamp(12px,3vw,1.5rem)] min-w-0">
           <nav
             aria-label="Navigasi utama"
-            className="hidden md:flex items-center gap-1 rounded-2xl p-1"
-            style={{ backgroundColor: 'var(--bg-subtle)' }}
+            className="hidden md:flex flex-wrap min-w-0 max-w-full items-center gap-1 rounded-2xl p-1.5"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
+              boxShadow: 'var(--shadow-card)',
+            }}
           >
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
@@ -44,11 +42,13 @@ export function AppHeader({
                   type="button"
                   onClick={() => onSelectTab(item.id)}
                   aria-current={isActive ? 'page' : undefined}
-                  className="relative flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs lg:text-sm font-medium whitespace-nowrap transition-colors"
+                  className={`relative flex shrink-0 min-w-0 max-w-full items-center gap-1.5 rounded-xl px-3 py-2 text-xs lg:text-sm font-medium whitespace-nowrap transition-colors ${
+                    isActive ? '' : 'hover:bg-[var(--bg-subtle)]'
+                  }`}
                   style={{
-                    backgroundColor: isActive ? 'var(--bg-surface)' : 'transparent',
-                    color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                    boxShadow: isActive ? '0 1px 3px oklch(0 0 0 / 0.08)' : 'none',
+                    backgroundColor: isActive ? 'var(--accent-soft)' : 'transparent',
+                    color: isActive ? 'var(--accent-text)' : 'var(--text-secondary)',
+                    boxShadow: isActive ? 'inset 0 0 0 1px var(--accent-border)' : 'none',
                   }}
                 >
                   <Icon className="h-4 w-4 shrink-0" strokeWidth={isActive ? 2.1 : 1.75} aria-hidden="true" />
@@ -70,11 +70,12 @@ export function AppHeader({
           </nav>
 
           <div
-            className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold tabular-nums whitespace-nowrap"
+            className="flex shrink-0 min-w-0 max-w-full items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-semibold tabular-nums whitespace-nowrap"
             style={{
               backgroundColor: 'var(--sun-soft)',
               color: 'var(--sun-text)',
               border: '1px solid var(--sun-border)',
+              boxShadow: 'var(--shadow-card)',
             }}
             title="Streak harian Anda"
           >
@@ -86,14 +87,15 @@ export function AppHeader({
 
       <nav
         aria-label="Navigasi mobile"
-        className="fixed bottom-0 inset-x-0 z-30 md:hidden"
+        className="fixed inset-x-3 bottom-3 z-30 md:hidden rounded-2xl backdrop-blur-md"
         style={{
-          backgroundColor: 'var(--bg-surface)',
-          borderTop: '1px solid var(--border-subtle)',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          marginBottom: 'env(safe-area-inset-bottom, 0px)',
+          backgroundColor: 'color-mix(in oklab, var(--bg-surface) 92%, transparent)',
+          border: '1px solid var(--border-subtle)',
+          boxShadow: 'var(--shadow-elevated)',
         }}
       >
-        <div className="grid grid-cols-3 px-2 py-1.5">
+        <div className="grid grid-cols-3 gap-1 p-1.5">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -105,7 +107,7 @@ export function AppHeader({
                 aria-current={isActive ? 'page' : undefined}
                 className="relative flex min-h-11 flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium whitespace-nowrap transition-colors"
                 style={{
-                  color: isActive ? 'var(--accent-text)' : 'var(--text-muted)',
+                  color: isActive ? 'var(--accent-text)' : 'var(--text-secondary)',
                   backgroundColor: isActive ? 'var(--accent-soft)' : 'transparent',
                 }}
               >

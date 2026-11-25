@@ -29,7 +29,7 @@ export type MasteryBucket = 'new' | 'learning' | 'mastering' | 'memorized';
 
 export type NavTab = 'today' | 'progress' | 'settings';
 
-export type SettingsSectionId = 'learning' | 'voice' | 'decks' | 'import';
+export type SettingsSectionId = 'learning' | 'voice' | 'decks' | 'import' | 'data';
 
 export interface VocabCard {
   id: string;
