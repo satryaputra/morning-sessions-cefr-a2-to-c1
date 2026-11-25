@@ -44,3 +44,15 @@ pnpm test            # Jalankan unit test Vitest
 pnpm run build       # Build produksi (dist/)
 pnpm run preview     # Preview hasil build produksi
 ```
+
+## Deploy ke Cloudflare Workers
+
+Aplikasi ini dikonfigurasi untuk berjalan di **Cloudflare Workers with Static Assets** (`wrangler.jsonc`) dengan proxy API ElevenLabs di `worker/index.ts`.
+
+```bash
+# Simpan API key ElevenLabs sebagai secret di Cloudflare Workers (opsional)
+pnpm dlx wrangler secret put ELEVENLABS_API_KEY
+
+# Build aset statis lalu deploy ke Cloudflare Workers
+pnpm run deploy
+```

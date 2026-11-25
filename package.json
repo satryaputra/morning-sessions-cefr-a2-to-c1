@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "deploy": "pnpm run build && pnpm dlx wrangler deploy"
   },
   "dependencies": {
     "lucide-react": "^0.511.0",
